@@ -1,0 +1,102 @@
+#define _DS18B20_LOCAL
+#include "ds18b20.h"
+#include "stm32f10x.h"
+#include "stm32f10x_conf.h"
+
+inline void DS18B20_init(void)
+{
+	reset_1wire();
+	write_1820(0xCC);
+	write_1820(0x4E); //instrukcja WRITE SCRATCHPAD
+	write_1820(0x24);
+	write_1820(0x24);
+	write_1820(0x7F); //rozdzielczoœæ 12 bit
+}
+
+void reset_1wire(){
+    DIR_1WIRE_OUT();
+    SET_OP_1WIRE();
+    CLR_OP_1WIRE();
+    //delay_nus(500);    //480us
+    delay_10us(50);
+    SET_OP_1WIRE();
+    DIR_1WIRE_IN();
+    //delay_nus(30);     //15~60us
+    delay_10us(3);
+    while(CHECK_IP_1WIRE());
+    DIR_1WIRE_OUT();
+    SET_OP_1WIRE();
+    //delay_nus(100);   //60~240us
+    delay_10us(10);
+}
+
+/*
+Read ROM       [33H]
+Match ROM    [55H]
+Skip ROM      [CCH]
+Search ROM    [F0H]
+Alarm search [ECH]
+
+Write Scratchpad        [4EH]
+Read Scratchpad       [BEH]
+Copy Scratchpad[48H]
+Convert Temperature         [44H]
+Recall EPROM                    [B8H]
+Read Power supply               [B4H]
+*/
+void write_1820(u8 x)
+{
+    u16 i;
+
+        for(i=0; i<8; i++)
+    {
+               CLR_OP_1WIRE();
+               if(x & 0x01)
+                       SET_OP_1WIRE();
+               else
+                       CLR_OP_1WIRE();
+                x>>=1;
+               delay_nus(30);   //15~60us
+               SET_OP_1WIRE();
+    }
+    SET_OP_1WIRE();
+}
+u8 read_1820(void)
+{
+        u16 i;
+        u8 x = 0;
+
+        DIR_1WIRE_OUT();
+    for(i=0; i<8; i++)
+    {
+            CLR_OP_1WIRE();
+            x >>= 1;
+                SET_OP_1WIRE();
+            DIR_1WIRE_IN();
+
+            if(CHECK_IP_1WIRE())
+                    x |= 0x80;
+            delay_nus(100); //60~120us
+            DIR_1WIRE_OUT();
+    }
+    return (x);
+}
+
+inline void DS18B20_Convert(void)
+{
+	 reset_1wire();
+     write_1820(0xcc);
+     write_1820(0x44);
+}
+
+inline s16 DS18B20_Read(void)
+{
+    s16 res;
+    reset_1wire();
+    write_1820(0xcc);
+    write_1820(0xbe);
+    res=read_1820();
+    res|=read_1820()<<8;
+    return (s16)res;
+}
+

@@ -1,0 +1,26 @@
+#ifndef _DS18B20_H_
+#define _DS18B20_H_
+
+#include "stm8s.h"
+
+/*
+PC1 - 1Wire Bus
+*/
+#define READ_DS18B20()      (GPIOC->IDR & GPIO_PIN_1)                     /* read 1 wire bus */
+
+#define DIR_1WIRE_IN()      (GPIOx->DDR &= (uint8_t)(~(GPIO_Pin)))        /* input mode */
+#define DIR_1WIRE_OUT()     (GPIOx->DDR |= (uint8_t)GPIO_Pin)             /* output mode */
+#define CLR_OP_1WIRE()      (GPIOC->ODR &= ~GPIO_PIN_1)                   /* clear output */
+#define SET_OP_1WIRE()      (GPIOC->ODR |= GPIO_PIN_1)                    /* set output */
+#define CHECK_IP_1WIRE()    (GPIOC->IDR & GPIO_PIN_1)                     /* read 1 wire bus */
+
+void write_1820(uint8_t x);
+void reset_1wire();
+void init_1820();
+u8 read_1820(void);
+void DS18B20_init(void);
+void DS18B20_Convert(void);
+s16 DS18B20_Read(void);
+void delay_nus(vu32 nCount);
+
+#endif
