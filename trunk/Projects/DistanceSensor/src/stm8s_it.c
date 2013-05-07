@@ -52,9 +52,9 @@ s32 CAPTURE_delta = 0;
 u8 tmpccr3h;
 u8 tmpccr3l;
 u16 tmpccr3;
-u8 tmpccr2h;
-u8 tmpccr2l;
-u16 tmpccr2;
+u8 tmpccr1h;
+u8 tmpccr1l;
+u16 tmpccr1;
 
 #ifdef _COSMIC_
 /**
@@ -260,36 +260,36 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
-  u8 tim1_cc2_flag = FALSE;
-  if(TIM1->SR1 & TIM1_IT_CC2)
+  u8 tim1_cc1_flag = FALSE;
+  if(TIM1->SR1 & TIM1_IT_CC1)
   {
-    tim1_cc2_flag = TRUE;
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC2);     /* clear TIM1 CC2 interrupt flag */
+    tim1_cc1_flag = TRUE;
+    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC1);     /* clear TIM1 CC2 interrupt flag */
   }
-  if(TIM1->SR1 & TIM1_IT_CC3 && tim1_cc2_flag && CAPTURE_new_mes == FALSE)
+  if(TIM1->SR1 & TIM1_IT_CC3 && tim1_cc1_flag && CAPTURE_new_mes == FALSE)
   {     
     tmpccr3h = TIM1->CCR3H;
     tmpccr3l = TIM1->CCR3L;
     tmpccr3 = (u16)(tmpccr3l);
     tmpccr3 |= (u16)((u16)tmpccr3h << 8);
-    tmpccr2h = TIM1->CCR2H;
-    tmpccr2l = TIM1->CCR2L;
-    tmpccr2 = (u16)(tmpccr2l);
-    tmpccr2 |= (u16)((u16)tmpccr2h << 8);
-    CAPTURE_delta = (s32)(tmpccr3) - (s32)(tmpccr2);
+    tmpccr1h = TIM1->CCR1H;
+    tmpccr1l = TIM1->CCR1L;
+    tmpccr1 = (u16)(tmpccr1l);
+    tmpccr1 |= (u16)((u16)tmpccr1h << 8);
+    CAPTURE_delta = (s32)(tmpccr3) - (s32)(tmpccr1);
     if(CAPTURE_delta >= 0)
     {
-     if(TIM1->SR1 & TIM1_IT_UPDATE)
-     {
-       CAPTURE_delta = CAPTURE_INVALID_MES;  /* invalid measurement value */
-     }
+     //if(TIM1->SR1 & TIM1_IT_UPDATE)
+     //{
+     //  CAPTURE_delta = CAPTURE_INVALID_MES;  /* invalid measurement value */
+     //}
     }
     else
     {
-      CAPTURE_delta = (s32)(65536 - tmpccr2 + tmpccr3); 
+      CAPTURE_delta = (s32)(65536 - tmpccr1 + tmpccr3); 
     }
     CAPTURE_new_mes = TRUE;        /* new distance measurement value */
-    tim1_cc2_flag = FALSE;
+    tim1_cc1_flag = FALSE;
     TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);     /* clear TIM1 CC3 interrupt flag */
     TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);  /* clear TIM1 UPDATE interrupt flag */
   }
