@@ -95,8 +95,9 @@ void main(void)
      {
        /* distance[um] = 331.3[m/s] * delta_t[us] */
        distance = soundspeed * CAPTURE_delta;
-       distance /= 10000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms*/
+       distance /= 20000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms*/
      }
+     CAPTURE_new_mes = FALSE;
    }
   }
 }
