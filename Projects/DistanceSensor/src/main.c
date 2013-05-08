@@ -33,7 +33,8 @@
 /* Global variables ----------------------------------------------------------*/
 s16 temperature = 0;
 float tempr = 0.0;
-u8 neg_temp_flag = 0;
+u8 neg_temp_flag = FALSE;
+u8 temperature_read_flag = FALSE;
 u16 tim1_cntr = 0;
 u32 period = 0;
 u8 time = 50;
@@ -42,6 +43,8 @@ const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
+u16 rec_distances[32];
+u8 idx_rec_distances = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -73,16 +76,17 @@ void main(void)
 	  else 
 	  {
 	    temperature = -(temperature);
-	    neg_temp_flag = 1;
+	    neg_temp_flag = TRUE;
 	  }
 	  temperature >>= 4;
     soundspeedkfactorcorrection = soundspeedkfactor * temperature;
     soundspeedkfactorcorrection /= 100;  /* convert from km/s to dm/s for compatibility with soundspeed0degC */
     soundspeed = soundspeed0degC + soundspeedkfactorcorrection;
 	  DS18B20_convert();
-    delay_1s_flag = FALSE;	
+    delay_1s_flag = FALSE;
+    temperature_read_flag = TRUE;	
    }
-   if(delay_100ms_flag == TRUE)
+   if(delay_100ms_flag && temperature_read_flag)
    {
      SONAR_TRIG_ON;
      DELAY_US(DELAY_10US);
@@ -91,11 +95,19 @@ void main(void)
    }
    if(CAPTURE_new_mes)
    {
-     if(CAPTURE_delta != CAPTURE_INVALID_MES)
+     if(temperature_read_flag)
      {
        /* distance[um] = 331.3[m/s] * delta_t[us] */
-       distance = soundspeed * CAPTURE_delta;
-       distance /= 20000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms*/
+       distance = (s32)((u32)soundspeed * (u32)CAPTURE_delta);
+       distance /= 20000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms and divide by 2-sound makes twice the distance*/
+       if(idx_rec_distances < 32) 
+       {
+         rec_distances[idx_rec_distances++] = (u16)distance;
+       }
+       else
+       {
+         idx_rec_distances = 0;
+       }
      }
      CAPTURE_new_mes = FALSE;
    }
