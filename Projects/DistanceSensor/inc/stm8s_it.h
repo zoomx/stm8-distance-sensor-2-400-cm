@@ -31,7 +31,7 @@ extern u8 delay_100ms_flag;
 extern u8 delay_50ms_flag;
 extern u8 delay_1s_flag;
 extern u8 CAPTURE_new_mes;
-extern s32 CAPTURE_delta;
+extern u16 CAPTURE_delta;
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 #define CAPTURE_INVALID_MES 65536
