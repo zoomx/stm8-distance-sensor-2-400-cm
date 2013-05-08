@@ -48,13 +48,10 @@ u8 delay_1s_flag = FALSE;
 u8 delay_cnt_50ms = 0;
 u8 delay_50ms_flag = FALSE;
 u8 CAPTURE_new_mes = FALSE;
-s32 CAPTURE_delta = 0;
+u16 CAPTURE_delta = 0;
 u8 tmpccr3h;
 u8 tmpccr3l;
 u16 tmpccr3;
-u8 tmpccr1h;
-u8 tmpccr1l;
-u16 tmpccr1;
 
 #ifdef _COSMIC_
 /**
@@ -260,40 +257,18 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
-  u8 tim1_cc1_flag = FALSE;
-  if(TIM1->SR1 & TIM1_IT_CC1)
-  {
-    tim1_cc1_flag = TRUE;
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC1);     /* clear TIM1 CC2 interrupt flag */
-  }
-  if(TIM1->SR1 & TIM1_IT_CC3 && tim1_cc1_flag && CAPTURE_new_mes == FALSE)
+  if(TIM1->SR1 & TIM1_IT_CC3)
   {     
-    tmpccr3h = TIM1->CCR3H;
-    tmpccr3l = TIM1->CCR3L;
-    tmpccr3 = (u16)(tmpccr3l);
-    tmpccr3 |= (u16)((u16)tmpccr3h << 8);
-    tmpccr1h = TIM1->CCR1H;
-    tmpccr1l = TIM1->CCR1L;
-    tmpccr1 = (u16)(tmpccr1l);
-    tmpccr1 |= (u16)((u16)tmpccr1h << 8);
-    CAPTURE_delta = (s32)(tmpccr3) - (s32)(tmpccr1);
-    if(CAPTURE_delta >= 0)
+    if(CAPTURE_new_mes == FALSE)
     {
-     //if(TIM1->SR1 & TIM1_IT_UPDATE)
-     //{
-     //  CAPTURE_delta = CAPTURE_INVALID_MES;  /* invalid measurement value */
-     //}
+      tmpccr3h = TIM1->CCR3H;
+      tmpccr3l = TIM1->CCR3L;
+      CAPTURE_delta = (u16)(tmpccr3l);
+      CAPTURE_delta |= (u16)((u16)tmpccr3h << 8);
+      CAPTURE_new_mes = TRUE;        /* new distance measurement value */
     }
-    else
-    {
-      CAPTURE_delta = (s32)(65536 - tmpccr1 + tmpccr3); 
-    }
-    CAPTURE_new_mes = TRUE;        /* new distance measurement value */
-    tim1_cc1_flag = FALSE;
     TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);     /* clear TIM1 CC3 interrupt flag */
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);  /* clear TIM1 UPDATE interrupt flag */
   }
-  TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);     /* clear TIM1 CC3 interrupt flag */
 }
 
 #ifdef STM8S903
