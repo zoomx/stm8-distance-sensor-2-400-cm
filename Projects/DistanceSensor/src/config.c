@@ -6,6 +6,8 @@ void Config()
 {
   /* Fmaster = 16MHz */
   CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV1);
+  //CLK_HSECmd(ENABLE);
+  //CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV1);
   
   /* Enable peripheral clock */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
