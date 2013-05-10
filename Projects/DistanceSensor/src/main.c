@@ -35,16 +35,21 @@ s16 temperature = 0;
 float tempr = 0.0;
 u8 neg_temp_flag = FALSE;
 u8 temperature_read_flag = FALSE;
+u8 distance_samples_read_flag = FALSE;
+u8 distance_plausi_calc_flag = FALSE;
 u16 tim1_cntr = 0;
 u32 period = 0;
 u8 time = 50;
 s32 distance = 0;
 const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
+const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
-u16 rec_distances[32];
+u16 rec_distances[32];     /* distance samples */
+u8 freq_rec_distances[32];
 u8 idx_rec_distances = 0;
+u16 distance_plausi = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -58,10 +63,15 @@ u8 idx_rec_distances = 0;
   */
 void main(void)
 {
+  u8 i, j;
   Config();
   DELAY_US(1000);
   DS18B20_init();
   DS18B20_convert();
+  for(i = 0; i < 32; i++)
+  {
+    freq_rec_distances[i] = 0;
+  }
   enableInterrupts();	
 
   while (1)
@@ -103,13 +113,62 @@ void main(void)
        if(idx_rec_distances < 32) 
        {
          rec_distances[idx_rec_distances++] = (u16)distance;
+         CAPTURE_new_mes = FALSE;
        }
        else
        {
          idx_rec_distances = 0;
+         distance_samples_read_flag = TRUE;
        }
      }
-     CAPTURE_new_mes = FALSE;
+   }
+   if(distance_samples_read_flag)
+   {
+    s8 max = -1;
+    u8 max_idx = 0;
+     for(i = 0; i < 32; i++)
+     { 
+       for(j = 0; j < 32; j++)
+        {
+          if(i != j)
+          {
+            if(rec_distances[i] >= rec_distances[j])
+            {
+              if((rec_distances[i] - rec_distances[j]) <= (u16)valid_sample_difference)
+              {
+                freq_rec_distances[i]++;
+              }
+            }
+            else /* rec_distances[i] < rec_distances[j] */
+            {
+              if((rec_distances[j] - rec_distances[i]) <= (u16)valid_sample_difference)
+              {
+                freq_rec_distances[i]++;
+              }
+            }
+          }
+            
+        }
+     }
+     for(i = 0; i < 32; i++)
+     {
+       if(freq_rec_distances[i] > max) 
+       {
+         max = freq_rec_distances[i];
+         max_idx = i;
+       }
+     }
+     if(max == -1) 
+     {    
+       distance_plausi = 0;
+       distance_plausi_calc_flag = FALSE;
+     }
+     else 
+     {
+      distance_plausi = rec_distances[max_idx];
+      distance_plausi_calc_flag = TRUE;
+     }
+     distance_samples_read_flag = FALSE;
    }
   }
 }
