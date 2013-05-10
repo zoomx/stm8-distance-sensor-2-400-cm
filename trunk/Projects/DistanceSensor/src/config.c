@@ -5,12 +5,26 @@
 void Config()
 {
   /* Fmaster = 16MHz */
-  CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV1);
+  //CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV1);
   //CLK_HSECmd(ENABLE);
   //CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV1);
+  /* Automatic clock switching from HSI/8 to HSE */
+  CLK_DeInit();
+  CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV1);
+  CLK->ECKR |= 0x01;   /* HSEEN: High speed external crystal oscillator enable */
+  while(!(CLK->ECKR & 0x02));  /* HSERDY: High speed external crystal oscillator ready, waint until HSE ready */
+  CLK->SWCR |= 0x02;   /* set SWEN bit: Switch start/stop */
+  CLK->SWR = 0xB4;     /* HSE selected as master clock source */
+  while(CLK->SWCR & 0x01);   /* wait until switch busy: SWBSY = 1 */
+  /* Alternative to try
+     CLK_LSICmd(ENABLE);
+     CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
+     CLK_SYSCLKSourceConfig(CLK_SYSCLKSource_LSI);
+     CLK_SYSCLKSourceSwitchCmd(ENABLE);
+     while (((CLK->SWCR)& 0x01)==0x01); */
   
   /* Enable peripheral clock */
-  CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
+  //CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, ENABLE);   /* 8bit: for implementing delays */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);   /* 16bit: for capture of ultrasonic distance pulse width */
   //CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER2, ENABLE);   /* used for delays */
