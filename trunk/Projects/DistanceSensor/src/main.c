@@ -35,8 +35,9 @@ s16 temperature = 0;
 float tempr = 0.0;
 u8 neg_temp_flag = FALSE;
 u8 temperature_read_flag = FALSE;
-u8 distance_samples_read_flag = FALSE;
-u8 distance_plausi_calc_flag = FALSE;
+u8 dist_samples_read_flag = FALSE;
+u8 dist_plausi_calc_flag = FALSE;
+u8 dist_plausi_array_full = FALSE;
 u16 tim1_cntr = 0;
 u32 period = 0;
 u8 time = 50;
@@ -47,10 +48,12 @@ const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 
 const u8 freq_thrs = 16;
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
-u16 rec_distances[32];     /* distance samples */
-u8 freq_rec_distances[32];
-u8 idx_rec_distances = 0;
-u16 distance_plausi = 0;
+u16 rec_dist[32];     /* distance samples */
+u8 freq_rec_dist[32];
+u8 idx_rec_dist = 0;
+u16 dist_plausi = 0;
+u16 dist_plausi_array[10];
+u8 idx_dist_plausi = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -71,7 +74,7 @@ void main(void)
   DS18B20_convert();
   for(i = 0; i < 32; i++)
   {
-    freq_rec_distances[i] = 0;
+    freq_rec_dist[i] = 0;
   }
   enableInterrupts();	
 
@@ -111,40 +114,40 @@ void main(void)
        /* distance[um] = 331.3[m/s] * delta_t[us] */
        distance = (s32)((u32)soundspeed * (u32)CAPTURE_delta);
        distance /= 20000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms and divide by 2-sound makes twice the distance*/
-       if(idx_rec_distances < 32) 
+       if(idx_rec_dist < 32) 
        {
-         rec_distances[idx_rec_distances++] = (u16)distance;
-         CAPTURE_new_mes = FALSE;
+         rec_dist[idx_rec_dist++] = (u16)distance;
        }
        else
        {
-         idx_rec_distances = 0;
-         distance_samples_read_flag = TRUE;
+         idx_rec_dist = 0;
+         dist_samples_read_flag = TRUE;
        }
+	   CAPTURE_new_mes = FALSE;
      }
    }
-   if(distance_samples_read_flag)
+   if(dist_samples_read_flag)
    {
-    u32 sum_distances = 0;
-    u8 distances_samples = 0;
+    u32 sum_dist = 0;
+    u8 dist_samples = 0;
      for(i = 0; i < 32; i++)
      { 
        for(j = 0; j < 32; j++)
         {
           if(i != j)
           {
-            if(rec_distances[i] >= rec_distances[j])
+            if(rec_dist[i] >= rec_dist[j])
             {
-              if((rec_distances[i] - rec_distances[j]) <= (u16)valid_sample_difference)
+              if((rec_dist[i] - rec_dist[j]) <= (u16)valid_sample_difference)
               {
-                freq_rec_distances[i]++;
+                freq_rec_dist[i]++;
               }
             }
             else /* rec_distances[i] < rec_distances[j] */
             {
-              if((rec_distances[j] - rec_distances[i]) <= (u16)valid_sample_difference)
+              if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
               {
-                freq_rec_distances[i]++;
+                freq_rec_dist[i]++;
               }
             }
           }
@@ -153,23 +156,40 @@ void main(void)
      }
      for(i = 0; i < 32; i++)
      {
-       if(freq_rec_distances[i] > (u16)freq_thrs) 
+       if(freq_rec_dist[i] > (u16)freq_thrs) 
        {
-         sum_distances += rec_distances[i];
-         distances_samples++;
+         sum_dist += rec_dist[i];
+         dist_samples++;
        }
      }
-     if(sum_distances == 0) 
+     if(sum_dist == 0) 
      {    
-       distance_plausi = 0;
-       distance_plausi_calc_flag = FALSE;
+       dist_plausi = 0;
+       dist_plausi_calc_flag = FALSE;
      }
      else 
      {
-      distance_plausi = sum_distances / distances_samples;
-      distance_plausi_calc_flag = TRUE;
+      dist_plausi = sum_dist / dist_samples;
+	  if(idx_dist_plausi < 10) 
+	  {
+	    dist_plausi_array[idx_dist_plausi] = dist_plausi;
+	    idx_dist_plausi++;
+	  }
+	  else
+	  {
+	    dist_plausi_array_full = TRUE;
+	  }
+      dist_plausi_calc_flag = TRUE;
      }
-     distance_samples_read_flag = FALSE;
+     dist_samples_read_flag = FALSE;
+   }
+   if(CAPTURE_ovf_err)
+   {
+     
+   }
+   if(CAPTURE_no_trig_err)
+   {
+    
    }
   }
 }
