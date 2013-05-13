@@ -71,9 +71,9 @@ void Config()
   //TIM1->CCER2 |= 0x02;  /* CC3P: Capture/compare 3 output polarity, 1: Capture on a falling edge */
   /*TIM1_ICInit(TIM1_CHANNEL_2, TIM1_ICPOLARITY_RISING, TIM1_ICSELECTION_DIRECTTI, TIM1_ICPSC_DIV1, 0x00);*/    /* PC2 */
   /*TIM1_ICInit(TIM1_CHANNEL_3, TIM1_ICPOLARITY_FALLING, TIM1_ICSELECTION_DIRECTTI, TIM1_ICPSC_DIV1, 0x00);*/     /* PC3 */
-  /* Trigger reset mode */
+  /* Trigger standard mode */
   TIM1->CCER1 &= ~(0x20); /* Write CC2P = 0 in TIM1_CCER1 register to validate the polarity (and detect rising edges).*/
-  TIM1->SMCR |= 0x04;  /* SMS = 100, Reset mode - Rising edge of the selected trigger signal (TRGI) re-initializes the counter */
+  TIM1->SMCR |= 0x06;  /* Configure the timer in trigger mode by writing SMS = 110 */
   TIM1->SMCR |= 0x60;  /* TS = 110, 110: Filtered timer input 2 (TI2FP2) */
   TIM1->CCMR3 |= 0x01;  /* 01: CC3 channel is configured as input, IC3 is mapped on TI3FP3 */
   TIM1->CCER2 |= 0x01;  /* CC3E: Capture/compare 3 output enable */
@@ -83,5 +83,5 @@ void Config()
   TIM1_ClearITPendingBit(TIM1_FLAG_CC3);
   TIM1_ClearITPendingBit(TIM1_FLAG_CC2);
   TIM1_ClearITPendingBit(TIM1_IT_UPDATE);
-  TIM1_Cmd(ENABLE);
+  //TIM1_Cmd(ENABLE);   /* Timer1 start by trigger? */
 }
