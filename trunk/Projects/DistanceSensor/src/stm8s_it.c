@@ -279,52 +279,53 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   if(TIM1->SR1 & TIM1_IT_CC3)
   {    
     TIM1->CR1 &= ~(0x01);      /* after measurement stop the timer, to be restarted by sonar rising edge */
-	TIM1->CNTRH = 0x00;        /* reset timer */
-	TIM1->CNTRL = 0x00; 
-	sensor_alive_cnt = 0;      /* reset ultrasonic sensor alive watchdog */
+	  TIM1->CNTRH = 0x00;        /* reset timer */
+	  TIM1->CNTRL = 0x00; 
+	  sensor_alive_cnt = 0;      /* reset ultrasonic sensor alive watchdog */
+    CAPTURE_sensor_not_responding_err = FALSE;
     CAPTURE_status = 4;	
-	if(!(TIM1->SR1 & TIM1_IT_TRIGGER))  
-	{
-	  /* if no trigger occured previously */
-	  CAPTURE_status = 2;
-	  if(CAPTURE_no_trig_cnt < (u8)255) ++CAPTURE_no_trig_cnt; 
-	  if(CAPTURE_no_trig_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
+	  if(!(TIM1->SR1 & TIM1_IT_TRIGGER))  
 	  {
-	    CAPTURE_no_err_cnt = 0;
-	    CAPTURE_no_trig_err = TRUE;
+	    /* if no trigger occured previously */
+	    CAPTURE_status = 2;
+	    if(CAPTURE_no_trig_cnt < (u8)255) ++CAPTURE_no_trig_cnt; 
+	    if(CAPTURE_no_trig_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
+	    {
+	      CAPTURE_no_err_cnt = 0;
+	      CAPTURE_no_trig_err = TRUE;
+	    }
 	  }
-	}
     else if(TIM1->SR1 & TIM1_IT_UPDATE)
-	{
-	  /* if we have timer overflow since last trigger - echo out of specification of sonar */
-	  CAPTURE_status = 1;
-	  if(CAPTURE_ovf_cnt < (u8)255) ++CAPTURE_ovf_cnt;
-	  if(CAPTURE_ovf_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
 	  {
-	    CAPTURE_no_err_cnt = 0;
-		  CAPTURE_ovf_err = TRUE;
+	    /* if we have timer overflow since last trigger - echo out of specification of sonar */
+	    CAPTURE_status = 1;
+	    if(CAPTURE_ovf_cnt < (u8)255) ++CAPTURE_ovf_cnt;
+	    if(CAPTURE_ovf_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
+	    {
+	      CAPTURE_no_err_cnt = 0;
+		    CAPTURE_ovf_err = TRUE;
+	    }
 	  }
-	}
-	else if(CAPTURE_new_mes == FALSE)
+	  else if(CAPTURE_new_mes == FALSE)
     {
       tmpccr3h = TIM1->CCR3H;
       tmpccr3l = TIM1->CCR3L;
       CAPTURE_delta = (u16)(tmpccr3l);
       CAPTURE_delta |= (u16)((u16)tmpccr3h << 8);
       CAPTURE_new_mes = TRUE;    /* new distance measurement value */
-	  CAPTURE_status = 3;
+	    CAPTURE_status = 3;
     }
-	if(CAPTURE_no_err_cnt < (u8)255)  ++CAPTURE_no_err_cnt;
-	if(CAPTURE_no_err_cnt >= (u8)CAPTURE_ERR_CNT_THRS) 
-	{
-	  CAPTURE_ovf_cnt = 0;
-	  CAPTURE_no_trig_cnt = 0;
-	  CAPTURE_ovf_err = FALSE;
-	  CAPTURE_no_trig_err = FALSE;
-	}
-	TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);     /* clear TIM1 UPDATE interrupt flag */
+	  if(CAPTURE_no_err_cnt < (u8)255)  ++CAPTURE_no_err_cnt;
+	  if(CAPTURE_no_err_cnt >= (u8)CAPTURE_ERR_CNT_THRS) 
+	  {
+	    CAPTURE_ovf_cnt = 0;
+	    CAPTURE_no_trig_cnt = 0;
+	    CAPTURE_ovf_err = FALSE;
+	    CAPTURE_no_trig_err = FALSE;
+	  }
+	  TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);     /* clear TIM1 UPDATE interrupt flag */
     TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);        /* clear TIM1 CC3 interrupt flag */
-	TIM1->SR1 = (u8)(~(u8)TIM1_IT_TRIGGER);    /* clear TIM1 TRIGGER interrupt flag */
+	  TIM1->SR1 = (u8)(~(u8)TIM1_IT_TRIGGER);    /* clear TIM1 TRIGGER interrupt flag */
   }
 }
 
