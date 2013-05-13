@@ -38,13 +38,15 @@
 /* Private functions ---------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
 
+#define DELAY_CNT_1S  500
 #define DELAY_CNT_100MS  50
+#define DELAY_CNT_50MS  25
+#define CAPTURE_ERR_CNT_THRS 10
+#define SENSOR_ALIVE_THRS 1000    /* 1000*2ms = 2000ms */
 u8 delay_cnt_100ms = 0;
 u8 delay_100ms_flag = FALSE;
-#define DELAY_CNT_1S  500
 u16 delay_cnt_1s = 0;
 u8 delay_1s_flag = FALSE;
-#define DELAY_CNT_50MS  25
 u8 delay_cnt_50ms = 0;
 u8 delay_50ms_flag = FALSE;
 u8 CAPTURE_new_mes = FALSE;
@@ -52,6 +54,22 @@ u16 CAPTURE_delta = 0;
 u8 tmpccr3h;
 u8 tmpccr3l;
 u16 tmpccr3;
+u8 CAPTURE_status = 0;
+u8 CAPTURE_ovf_cnt = 0;
+u8 CAPTURE_no_trig_cnt = 0;
+u8 CAPTURE_no_err_cnt = 0;
+u8 CAPTURE_ovf_err = FALSE;
+u8 CAPTURE_no_trig_err = FALSE;
+u8 CAPTURE_sensor_not_responding_err = FALSE;
+u16 sensor_alive_cnt = 0;
+/*
+  CAPTURE_status = 0   init value timer 1 capture ISR not reached
+  CAPTURE_status = 1   CC3 interrupt occured, time between rising and falling edge greater than 65.536ms
+  CAPTURE_status = 2   CC3 interrupt occured, no rising edge trigger occured previously
+  CAPTURE_status = 3   CC3 interrupt occured, capture ok (no timer overflow, rising edge trigger occured), CAPTURE_new_mes = FALSE
+  CAPTURE_status = 4   CC3 interrupt occured, capture ok (no timer overflow, rising edge trigger occured), CAPTURE_new_mes = TRUE
+  CAPTURE_status = 5   timer 1 capture occured, CC3 interrupt capture not occured
+*/
 
 #ifdef _COSMIC_
 /**
@@ -257,17 +275,56 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
+  CAPTURE_status = 5;
   if(TIM1->SR1 & TIM1_IT_CC3)
-  {     
-    if(CAPTURE_new_mes == FALSE)
+  {    
+    TIM1->CR1 &= ~(0x01);      /* after measurement stop the timer, to be restarted by sonar rising edge */
+	TIM1->CNTRH = 0x00;        /* reset timer */
+	TIM1->CNTRL = 0x00; 
+	sensor_alive_cnt = 0;      /* reset ultrasonic sensor alive watchdog */
+    CAPTURE_status = 4;	
+	if(!(TIM1->SR1 & TIM1_IT_TRIGGER))  
+	{
+	  /* if no trigger occured previously */
+	  CAPTURE_status = 2;
+	  if(CAPTURE_no_trig_cnt < (u8)255) ++CAPTURE_no_trig_cnt; 
+	  if(CAPTURE_no_trig_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
+	  {
+	    CAPTURE_no_err_cnt = 0;
+	    CAPTURE_no_trig_err = TRUE;
+	  }
+	}
+    else if(TIM1->SR1 & TIM1_IT_UPDATE)
+	{
+	  /* if we have timer overflow since last trigger - echo out of specification of sonar */
+	  CAPTURE_status = 1;
+	  if(CAPTURE_ovf_cnt < (u8)255) ++CAPTURE_ovf_cnt;
+	  if(CAPTURE_ovf_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
+	  {
+	    CAPTURE_no_err_cnt = 0;
+		  CAPTURE_ovf_err = TRUE;
+	  }
+	}
+	else if(CAPTURE_new_mes == FALSE)
     {
       tmpccr3h = TIM1->CCR3H;
       tmpccr3l = TIM1->CCR3L;
       CAPTURE_delta = (u16)(tmpccr3l);
       CAPTURE_delta |= (u16)((u16)tmpccr3h << 8);
-      CAPTURE_new_mes = TRUE;        /* new distance measurement value */
+      CAPTURE_new_mes = TRUE;    /* new distance measurement value */
+	  CAPTURE_status = 3;
     }
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);     /* clear TIM1 CC3 interrupt flag */
+	if(CAPTURE_no_err_cnt < (u8)255)  ++CAPTURE_no_err_cnt;
+	if(CAPTURE_no_err_cnt >= (u8)CAPTURE_ERR_CNT_THRS) 
+	{
+	  CAPTURE_ovf_cnt = 0;
+	  CAPTURE_no_trig_cnt = 0;
+	  CAPTURE_ovf_err = FALSE;
+	  CAPTURE_no_trig_err = FALSE;
+	}
+	TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);     /* clear TIM1 UPDATE interrupt flag */
+    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);        /* clear TIM1 CC3 interrupt flag */
+	TIM1->SR1 = (u8)(~(u8)TIM1_IT_TRIGGER);    /* clear TIM1 TRIGGER interrupt flag */
   }
 }
 
@@ -500,11 +557,17 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
     
     GPIO_WriteHigh(GPIOD, GPIO_PIN_1);
   }*/
-
+  /* Ultrasonic sensor alive watchdog */
+  if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   /* to be reset in sensor ISR */
+  if(sensor_alive_cnt >= SENSOR_ALIVE_THRS)
+  {
+    CAPTURE_sensor_not_responding_err = TRUE;
+  }
+  /*----------------------------------*/
   /* 1S flag */
   
   if(delay_1s_flag == FALSE) delay_cnt_1s++;
-  if(delay_cnt_1s == DELAY_CNT_1S)
+  if(delay_cnt_1s >= DELAY_CNT_1S)
   {
     delay_1s_flag = TRUE;
     delay_cnt_1s = 0; 
@@ -512,7 +575,7 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
   /* ------- */
   /* 100mS flag */
   if(delay_100ms_flag == FALSE) delay_cnt_100ms++;
-  if(delay_cnt_100ms == DELAY_CNT_100MS)
+  if(delay_cnt_100ms >= DELAY_CNT_100MS)
   {
     delay_100ms_flag = TRUE;
     delay_cnt_100ms = 0; 
@@ -520,7 +583,7 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
   /* -----------*/
   /* 50mS flag */
   if(delay_50ms_flag == FALSE) delay_cnt_50ms++;
-  if(delay_cnt_50ms == DELAY_CNT_50MS)
+  if(delay_cnt_50ms >= DELAY_CNT_50MS)
   {
     delay_50ms_flag = TRUE;
     delay_cnt_50ms = 0; 
