@@ -10,6 +10,7 @@
 #define DELAY_64US  341
 #define DELAY_60US  320
 #define DELAY_10US  53
+#define DELAY_15US  80
 #define DELAY_9US   48
 #define DELAY_55US  293
 
