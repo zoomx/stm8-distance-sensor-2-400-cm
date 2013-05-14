@@ -46,12 +46,14 @@ const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
 const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
 const u8 freq_thrs = 16;
+const u8 sensor_calib_value = 106;  /* adjust at 106% of sensor value*/
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
 u16 rec_dist[32];     /* distance samples */
 u8 freq_rec_dist[32];
 u8 idx_rec_dist = 0;
 u16 dist_plausi = 0;
+u16 dist_plausi_calib = 0;
 u16 dist_plausi_array[10];
 u8 idx_dist_plausi = 0;
 /* Public functions ----------------------------------------------------------*/
@@ -67,15 +69,10 @@ u8 idx_dist_plausi = 0;
   */
 void main(void)
 {
-  u8 i, j;
   Config();
   DELAY_US(1000);
   DS18B20_init();
   DS18B20_convert();
-  for(i = 0; i < 32; i++)
-  {
-    freq_rec_dist[i] = 0;
-  }
   enableInterrupts();	
 
   while (1)
@@ -103,7 +100,7 @@ void main(void)
    if(delay_100ms_flag && temperature_read_flag)
    {
      SONAR_TRIG_ON;
-     DELAY_US(DELAY_10US);
+     DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;
      delay_100ms_flag = FALSE;
    }
@@ -130,58 +127,76 @@ void main(void)
    {
     u32 sum_dist = 0;
     u8 dist_samples = 0;
-     for(i = 0; i < 32; i++)
-     { 
-       for(j = 0; j < 32; j++)
+    u8 i, j;
+    for(i = 0; i < 32; i++)
+    {
+      freq_rec_dist[i] = 0;
+    }
+    for(i = 0; i < 32; i++)
+    { 
+      for(j = i + 1; j < 32; j++)
+      {
+        if(rec_dist[i] >= rec_dist[j])
         {
-          if(i != j)
+          if((rec_dist[i] - rec_dist[j]) <= (u16)valid_sample_difference)
           {
-            if(rec_dist[i] >= rec_dist[j])
-            {
-              if((rec_dist[i] - rec_dist[j]) <= (u16)valid_sample_difference)
-              {
-                freq_rec_dist[i]++;
-              }
-            }
-            else /* rec_distances[i] < rec_distances[j] */
-            {
-              if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
-              {
-                freq_rec_dist[i]++;
-              }
-            }
+            freq_rec_dist[i]++;
           }
-            
         }
-     }
-     for(i = 0; i < 32; i++)
+        else /* rec_distances[i] < rec_distances[j] */
+        {
+          if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
+          {
+            freq_rec_dist[i]++;
+          }
+        }
+      }
+    }
+    for(i = 0; i < 32; i++)
+    {
+      if(freq_rec_dist[i] > (u16)freq_thrs) 
+      {
+        sum_dist += rec_dist[i];
+        dist_samples++;
+      }
+    }
+    if(sum_dist == 0) 
+    {    
+      dist_plausi = 0;
+      dist_plausi_calc_flag = FALSE;
+    }
+    else 
+    {
+     dist_plausi = sum_dist / dist_samples;
+     if(dist_plausi <= 4000)
      {
-       if(freq_rec_dist[i] > (u16)freq_thrs) 
+       u16 temp_dist_plausi_calib;
+       dist_plausi_calib = dist_plausi;       /* 1595 */
+       dist_plausi_calib /= 10;               /* 159 */
+       if((dist_plausi % 10) >= 5)
        {
-         sum_dist += rec_dist[i];
-         dist_samples++;
+        dist_plausi_calib++;                  /* 160 */
        }
+       dist_plausi_calib *= 106;              /* 16960 */
+       temp_dist_plausi_calib = dist_plausi_calib;
+       dist_plausi_calib /= 100;              /* 169 */
+       if((temp_dist_plausi_calib % 100) >= 50)
+       {
+         dist_plausi_calib++;                 /* 170 */
+       }
+	     if(idx_dist_plausi < 10) 
+	     {
+	       dist_plausi_array[idx_dist_plausi] = dist_plausi;
+	       idx_dist_plausi++;
+	     }
+	     else
+	     {
+         dist_plausi_array_full = TRUE;
+	     }
+       dist_plausi_calc_flag = TRUE;
      }
-     if(sum_dist == 0) 
-     {    
-       dist_plausi = 0;
-       dist_plausi_calc_flag = FALSE;
-     }
-     else 
-     {
-      dist_plausi = sum_dist / dist_samples;
-	  if(idx_dist_plausi < 10) 
-	  {
-	    dist_plausi_array[idx_dist_plausi] = dist_plausi;
-	    idx_dist_plausi++;
-	  }
-	  else
-	  {
-	    dist_plausi_array_full = TRUE;
-	  }
-      dist_plausi_calc_flag = TRUE;
-     }
-     dist_samples_read_flag = FALSE;
+    }
+    dist_samples_read_flag = FALSE;
    }
    if(CAPTURE_ovf_err)
    {
