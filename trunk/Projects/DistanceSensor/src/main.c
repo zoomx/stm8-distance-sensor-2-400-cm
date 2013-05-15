@@ -30,6 +30,8 @@
 #include "ds18b20.h"
 
 /* Private functions ---------------------------------------------------------*/
+#define DIST_SAMP (u8)20
+#define FREQ_THRS (u8)(DIST_SAMP/2)
 /* Global variables ----------------------------------------------------------*/
 s16 temperature = 0;
 float tempr = 0.0;
@@ -45,12 +47,11 @@ s32 distance = 0;
 const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
 const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
-const u8 freq_thrs = 16;
 const u8 sensor_calib_value = 106;  /* adjust at 106% of sensor value*/
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
-u16 rec_dist[32];     /* distance samples */
-u8 freq_rec_dist[32];
+u16 rec_dist[DIST_SAMP];     /* distance samples */
+u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi = 0;
 u16 dist_plausi_calib = 0;
@@ -111,7 +112,7 @@ void main(void)
        /* distance[um] = 331.3[m/s] * delta_t[us] */
        distance = (s32)((u32)soundspeed * (u32)CAPTURE_delta);
        distance /= 20000;   /* convert to mm 0-from dm/s to m/s and 000-from us to ms and divide by 2-sound makes twice the distance*/
-       if(idx_rec_dist < 32) 
+       if(idx_rec_dist < DIST_SAMP) 
        {
          rec_dist[idx_rec_dist++] = (u16)distance;
        }
@@ -126,38 +127,41 @@ void main(void)
    if(dist_samples_read_flag)
    {
     u32 sum_dist = 0;
-    u8 dist_samples = 0;
+    u8 l_dist_samples = 0;
     u8 i, j;
-    for(i = 0; i < 32; i++)
+    for(i = 0; i < DIST_SAMP; i++)
     {
       freq_rec_dist[i] = 0;
     }
-    for(i = 0; i < 32; i++)
+    for(i = 0; i < DIST_SAMP; i++)
     { 
-      for(j = i + 1; j < 32; j++)
+      for(j = 0; j < DIST_SAMP; j++)
       {
-        if(rec_dist[i] >= rec_dist[j])
+        if(i != j)
         {
-          if((rec_dist[i] - rec_dist[j]) <= (u16)valid_sample_difference)
+          if(rec_dist[i] >= rec_dist[j])
           {
-            freq_rec_dist[i]++;
+            if((rec_dist[i] - rec_dist[j]) <= (u16)valid_sample_difference)
+            {
+              freq_rec_dist[i]++;
+            }
           }
-        }
-        else /* rec_distances[i] < rec_distances[j] */
-        {
-          if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
+          else /* rec_distances[i] < rec_distances[j] */
           {
-            freq_rec_dist[i]++;
+            if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
+            {
+              freq_rec_dist[i]++;
+            }
           }
         }
       }
     }
-    for(i = 0; i < 32; i++)
+    for(i = 0; i < DIST_SAMP; i++)
     {
-      if(freq_rec_dist[i] > (u16)freq_thrs) 
+      if(freq_rec_dist[i] > FREQ_THRS) 
       {
         sum_dist += rec_dist[i];
-        dist_samples++;
+        l_dist_samples++;
       }
     }
     if(sum_dist == 0) 
@@ -167,8 +171,8 @@ void main(void)
     }
     else 
     {
-     dist_plausi = sum_dist / dist_samples;
-     if(dist_plausi <= 4000)
+     dist_plausi = sum_dist / l_dist_samples;
+     if(dist_plausi <= 4240)   /* if real measured distance <= 400cm */
      {
        u16 temp_dist_plausi_calib;
        dist_plausi_calib = dist_plausi;       /* 1595 */
