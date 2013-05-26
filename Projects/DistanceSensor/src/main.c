@@ -28,6 +28,7 @@
 #include "config.h"
 #include "delay.h"
 #include "ds18b20.h"
+#include "7seg.h"
 
 /* Private functions ---------------------------------------------------------*/
 #define DIST_SAMP (u8)20
@@ -48,6 +49,14 @@ const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
 const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
 const u8 sensor_calib_value = 106;  /* adjust at 106% of sensor value*/
+/* Display character constants */
+const u8 SymbComma = 0x80;
+const u16 SymbU = 0x0C70;
+const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, \
+                            0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
+const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, \
+                            0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
+/* --------------------------- */
 s16 soundspeedkfactorcorrection = 0;
 u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
 u16 rec_dist[DIST_SAMP];     /* distance samples */
@@ -73,6 +82,9 @@ void main(void)
   Config();
   DELAY_US(1000);
   DS18B20_init();
+  SevenSegInit();
+  SevenSegOut(A[5] | B[5]);
+  SevenSegRefresh();
   DS18B20_convert();
   enableInterrupts();	
 
