@@ -56,4 +56,14 @@ PB4 - CE   - OUT
 #define BOARD_CE_1       (GPIOB->ODR |= 0x10)
 #define BOARD_CE_0       (GPIOB->ODR &= ~0x10)
 
+/*-7 SEGMENT DISPLAY-*/
+#define DISP_SDI_1   (GPIOD->ODR |= GPIO_PIN_2)
+#define DISP_SDI_0   (GPIOD->ODR &= ~GPIO_PIN_2)
+#define DISP_nOE_1   (GPIOD->ODR |= GPIO_PIN_3)
+#define DISP_nOE_0   (GPIOD->ODR &= ~GPIO_PIN_3)
+#define DISP_LE_1    (GPIOD->ODR |= GPIO_PIN_4)
+#define DISP_LE_0   (GPIOD->ODR &= ~GPIO_PIN_4)
+#define DISP_CLK_1   (GPIOD->ODR |= GPIO_PIN_7)
+#define DISP_CLK_0   (GPIOD->ODR &= ~GPIO_PIN_7)
+
 #endif
