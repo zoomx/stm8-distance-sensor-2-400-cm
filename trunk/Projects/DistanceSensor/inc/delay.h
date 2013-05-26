@@ -1,7 +1,5 @@
-/*#define WAIT_50MS { \
-  while(DELAY_50MS_FLAG == FALSE);  \
-  DELAY_50MS_FLAG = FALSE;          \
-}*/
+#ifndef _DELAY_H_
+#define _DELAY_H_
 
 #define DELAY_480US 2560
 #define DELAY_70US  373
@@ -16,8 +14,8 @@
 
 void delay_ms(u16);
 
-//void delay_10us(u8);
 
 #define DELAY_US( loops ) \
         _asm("$N: \n decw X \n jrne $L \n nop", (u16)loops);
 
+#endif
