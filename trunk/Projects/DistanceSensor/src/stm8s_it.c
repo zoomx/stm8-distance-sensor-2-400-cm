@@ -549,14 +549,19 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
   /* In order to detect unexpected events during development,
   it is recommended to set a breakpoint on the following instruction.
   */
-  //if(GPIO_ReadInputPin(GPIOD, GPIO_PIN_1))  /* 4MS period -> f=250Hz */
+  //if(GPIOD->IDR & GPIO_PIN_2)  /* 4MS period -> f=250Hz */
   /*{
-    GPIO_WriteLow(GPIOD, GPIO_PIN_1);
+    DISP_SDI_0;
+    DISP_nOE_0;
+    DISP_LE_0;
+    DISP_CLK_0;
   }
   else
   {
-    
-    GPIO_WriteHigh(GPIOD, GPIO_PIN_1);
+    DISP_SDI_1;
+    DISP_nOE_1;
+    DISP_LE_1;
+    DISP_CLK_1;
   }*/
   /* Ultrasonic sensor alive watchdog */
   if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   /* to be reset in sensor ISR */
