@@ -83,7 +83,6 @@ void main(void)
   DELAY_US(1000);
   DS18B20_init();
   SevenSegInit();
-  SevenSegOut(A[5] | B[5]);
   SevenSegRefresh();
   DS18B20_convert();
   enableInterrupts();	
@@ -183,6 +182,7 @@ void main(void)
     }
     else 
     {
+     u8 disp[4];
      dist_plausi = sum_dist / l_dist_samples;
      if(dist_plausi <= 4240)   /* if real measured distance <= 400cm */
      {
@@ -202,13 +202,22 @@ void main(void)
        }
 	     if(idx_dist_plausi < 10) 
 	     {
-	       dist_plausi_array[idx_dist_plausi] = dist_plausi;
+	       dist_plausi_array[idx_dist_plausi] = dist_plausi_calib;
 	       idx_dist_plausi++;
 	     }
 	     else
 	     {
          dist_plausi_array_full = TRUE;
 	     }
+       disp[3] = dist_plausi_calib % 10;
+       dist_plausi_calib /= 10;
+       disp[2] = dist_plausi_calib % 10;
+       dist_plausi_calib /= 10;
+       disp[1] = dist_plausi_calib;
+       disp[0] = 0;
+       SevenSegOut(A[disp[2]] | B[disp[3]]);
+       SevenSegOut(0 | B[disp[1]]);
+       SevenSegRefresh();
        dist_plausi_calc_flag = TRUE;
      }
     }
