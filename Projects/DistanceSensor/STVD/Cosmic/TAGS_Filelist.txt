@@ -1,3 +1,4 @@
+..\..\src\7seg.c
 ..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_tim1.c
 ..\..\src\config.c
 ..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_tim4.c
@@ -10,6 +11,7 @@
 ..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_adc1.c
 ..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_clk.c
 ..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_gpio.c
+..\..\src\7seg.h
 ..\..\inc\board.h
 ..\..\..\..\libraries\stm8s_stdperiph_driver\inc\stm8s_tim2.h
 ..\..\inc\ds18b20.h
