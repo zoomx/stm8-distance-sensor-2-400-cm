@@ -209,6 +209,7 @@ void main(void)
 	     {
          dist_plausi_array_full = TRUE;
 	     }
+       UART1_SendData8((u8)dist_plausi_calib);
        disp[3] = dist_plausi_calib % 10;
        dist_plausi_calib /= 10;
        disp[2] = dist_plausi_calib % 10;
