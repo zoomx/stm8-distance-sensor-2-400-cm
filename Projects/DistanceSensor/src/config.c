@@ -26,6 +26,9 @@ void Config()
   //CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, ENABLE);   /* 8bit: for implementing delays */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);   /* 16bit: for capture of ultrasonic distance pulse width */
+  CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, ENABLE);     /* Enable I2C peripheral clock */
+  CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);     /* Enable SPI peripheral clock */
+  CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART1, ENABLE);   /* Enable UART1 peripheral clock */
 
   /* Sonar Pin init */  
   GPIO_Init(SONAR_TRIG_PORT, SONAR_TRIG_PIN, GPIO_MODE_OUT_PP_LOW_FAST);      /* Sonar trigger pin - output push-pull */
@@ -55,13 +58,21 @@ void Config()
   GPIO_Init(DISP_PORT, DISP_CLK_PIN, GPIO_MODE_OUT_PP_LOW_FAST);
 
   /* UART1 Configuration */
+  UART1_DeInit();
   GPIO_Init(USART_PORT, USART_TX_PIN, GPIO_MODE_OUT_PP_LOW_FAST);
   GPIO_Init(USART_PORT, USART_RX_PIN, GPIO_MODE_IN_PU_NO_IT);
   UART1_Init(9600, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO, 
                 UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
   UART1_ITConfig(UART1_IT_RXNE, ENABLE);
-  
   UART1_Cmd(ENABLE);
+
+  /* I2C Configuration */
+  I2C_DeInit();
+  GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_OUT_OD_HIZ_FAST);
+  GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUT_OD_HIZ_FAST);
+  I2C_Init(50000, 0x55, I2C_DUTYCYCLE_2, /*I2C_ACK_NONE*/I2C_ACK_CURR, I2C_ADDMODE_7BIT, 16 );
+  I2C_Cmd(ENABLE);
+
 
   /* TIMER4 configuration */
   TIM4_DeInit();
