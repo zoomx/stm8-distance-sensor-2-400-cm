@@ -48,9 +48,9 @@ PC3: Port C3 / Timer 1 - channel 3
 #define SONAR_TMR_TRIG_PIN  GPIO_PIN_2
 #define SONAR_TMR_CAP_PORT  GPIOC
 #define SONAR_TMR_CAP_PIN   GPIO_PIN_3
-#define SONAR_TRIG_ON    (SONAR_PORT->ODR |= SONAR_TRIG_PIN)
-#define SONAR_TRIG_OFF   (SONAR_PORT->ODR &= ~SONAR_TRIG_PIN)
-#define SONAR_TRIG_STATE (SONAR_PORT->IDR & SONAR_TRIG_PIN)
+#define SONAR_TRIG_ON    (SONAR_TRIG_PORT->ODR |= SONAR_TRIG_PIN)
+#define SONAR_TRIG_OFF   (SONAR_TRIG_PORT->ODR &= ~SONAR_TRIG_PIN)
+#define SONAR_TRIG_STATE (SONAR_TRIG_PORT->IDR & SONAR_TRIG_PIN)
 
 /* Software SPI CONFIG
 PB0 - SCK  - OUT
@@ -74,12 +74,20 @@ PB5: Port B5 / I2C data
 PB4: Port B4 / I2C clock
 */
 
-/* Harware SPI CONFIG
+/* Hardware SPI CONFIG
 PE5: Port E5 / SPI master/slave select (SPI NSS)
 PC5: Port C5 / SPI clock
 PC6: Port C6 / SPI MOSI
 PC7: Port C7 / SPI MISO
 */
+
+/* Hardware USART
+PD5: Port D5 / UART1 data transmit
+PD6: Port D6 / UART1 data receive
+ */
+#define USART_PORT    GPIOD
+#define USART_TX_PIN  GPIO_PIN_5
+#define USART_RX_PIN  GPIO_PIN_6
 
 /*-7 SEGMENT DISPLAY-
 PD2: Port D2 / Timer 2 - channel 3[AFR1]
