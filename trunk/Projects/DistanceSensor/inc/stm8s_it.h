@@ -27,9 +27,9 @@
 #include "stm8s.h"
 
 /* Exported types ------------------------------------------------------------*/
-extern u8 delay_100ms_flag;
+extern u8 flg_DELAY_100ms;
 extern u8 delay_50ms_flag;
-extern u8 delay_1s_flag;
+extern u8 flg_DELAY_1s;
 extern u8 CAPTURE_new_mes;
 extern u16 CAPTURE_delta;
 extern u8 CAPTURE_no_trig_err;
