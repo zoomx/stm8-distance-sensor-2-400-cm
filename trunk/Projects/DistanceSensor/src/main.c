@@ -29,27 +29,39 @@
 #include "delay.h"
 #include "ds18b20.h"
 #include "7seg.h"
+#include "ds3231m_rtc.h"
+
+void DisplayDIST(u16);
+void SendDIST_UART(u16);
+u16 Med_Calib_Round(u32, u8);
+void LevelReadingAlgo(void);
 
 /* Defines ---------------------------------------------------------*/
-#define DIST_SAMP        (u8)20
-#define FREQ_THRS        (u8)(DIST_SAMP/2)
-#define CALIB_PHASE      (u8)1
-#define DIST_VALID_PHASE (u8)2
+#define DIST_SAMP           (u8)20
+#define FREQ_THRS           (u8)(DIST_SAMP/2)
+#define REFCALC_PHASE       (u8)1
+#define DIST_VALID_PHASE    (u8)2
+#define ALGO_NR_REF_SAMPLES (u8)6
 /* Global variables ----------------------------------------------------------*/
-u8 curr_phase = CALIB_PHASE;
+u8 algo_curr_phase = REFCALC_PHASE;
+u16 algo_ref_samples[ALGO_NR_REF_SAMPLES];
+u8 algo_ref_samples_idx = 0;
+u8 algo_groups_ref_samples[ALGO_NR_REF_SAMPLES];
 s16 temperature = 0;
-u8 neg_temp_flag = FALSE;
-u8 temperature_read_flag = FALSE;
-u8 dist_samples_read_flag = FALSE;
-u8 dist_plausi_calc_flag = FALSE;
+u8 flg_TEMP_neg = FALSE;
+u8 flg_TEMP_read = FALSE;
+u8 flg_DIST_samples_read = FALSE;
+u8 flg_DIST_valid_calc = FALSE;
 s32 distance = 0;
 const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
 const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
 const u8 sensor_calib_value = 106;  /* adjust at 106% of sensor value*/
 /* Display character constants */
-const u8 SymbComma = 0x80;
+const u8 SymbComma = 0x80; 
 const u16 SymbU = 0x0C70;
+const u16 SymbMinusA = 0x0100;
+const u16 SymbMinusB = 0x8000;
 const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, \
                             0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
 const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, \
@@ -60,7 +72,6 @@ u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
 u16 rec_dist[DIST_SAMP];     /* distance samples */
 u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
-u16 dist_plausi = 0;
 u16 dist_plausi_calib = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
@@ -75,46 +86,57 @@ u16 dist_plausi_calib = 0;
   */
 void main(void)
 {
+  u8 i;
   Config();
+  //SevenSegInit();
+  //SevenSegRefresh();
   DELAY_US(1000);
   DS18B20_init();
-  SevenSegInit();
+  SevenSegOut(SymbMinusA | SymbMinusB);
+  SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
   DS18B20_convert();
-  enableInterrupts();	
+  for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
+  {
+    algo_groups_ref_samples[i] = 0;
+  }
 
+  enableInterrupts();	
+  
   while (1)
   {
-   if(delay_1s_flag)
+   if(flg_DELAY_1s)
    {
     temperature = DS18B20_read_16();
 	  if(temperature >= 0)
     {
-	    neg_temp_flag = 0;
+	    flg_TEMP_neg = 0;
 	  }
 	  else 
 	  {
 	    temperature = -(temperature);
-	    neg_temp_flag = TRUE;
+	    flg_TEMP_neg = TRUE;
 	  }
 	  temperature >>= 4;
     soundspeedkfactorcorrection = soundspeedkfactor * temperature;
     soundspeedkfactorcorrection /= 100;  /* convert from km/s to dm/s for compatibility with soundspeed0degC */
     soundspeed = soundspeed0degC + soundspeedkfactorcorrection;
 	  DS18B20_convert();     /* issue DS18B20 convert command, to read the results after 1s */
-    delay_1s_flag = FALSE;
-    temperature_read_flag = TRUE;	
+    flg_DELAY_1s = FALSE;
+    flg_TEMP_read = TRUE;	
    }
-   if(delay_100ms_flag && temperature_read_flag)
+   if(flg_DELAY_100ms && flg_TEMP_read)
    {
      SONAR_TRIG_ON;
      DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;
-     delay_100ms_flag = FALSE;
+     flg_DELAY_100ms = FALSE;
    }
    if(CAPTURE_new_mes)
    {
-     if(temperature_read_flag)
+     /*if(RTC_Mem_cnt < 16) RTC_Mem[RTC_Mem_cnt++] = DS3231M_ReadByte();*/
+     
+     if(flg_TEMP_read)
      {
        /* distance[um] = 331.3[m/s] * delta_t[us] */
        distance = (s32)((u32)soundspeed * (u32)CAPTURE_delta);
@@ -126,14 +148,14 @@ void main(void)
        else
        {
          idx_rec_dist = 0;
-         dist_samples_read_flag = TRUE;
+         flg_DIST_samples_read = TRUE;
        }
 	   CAPTURE_new_mes = FALSE;
      }
    }
-   if(dist_samples_read_flag)
+   if(flg_DIST_samples_read)
    {
-    u32 sum_dist = 0;
+    u32 l_sum_dist = 0;
     u8 l_dist_samples = 0;
     u8 i, j;
     /* Reset group size vector */
@@ -156,7 +178,7 @@ void main(void)
               freq_rec_dist[i]++;
             }
           }
-          else /* rec_distances[i] < rec_distances[j] */
+          else // rec_distances[i] < rec_distances[j] 
           {
             if((rec_dist[j] - rec_dist[i]) <= (u16)valid_sample_difference)
             {
@@ -168,59 +190,25 @@ void main(void)
     }
     /*----------------------------------------------------------------------*/
     /* Add distance samples that have groups of minimum size of FREQ_THRS */
-    for(sum_dist = 0, l_dist_samples = 0,i = 0; i < DIST_SAMP; i++)
+    for(l_sum_dist = 0, l_dist_samples = 0,i = 0; i < DIST_SAMP; i++)
     {
       if(freq_rec_dist[i] > FREQ_THRS) 
       {
-        sum_dist += rec_dist[i];
+        l_sum_dist += rec_dist[i];
         l_dist_samples++;
       }
     }
-    if(sum_dist == 0)   /* no group had minimum size of FREQ_THRS */
+    if(l_sum_dist == 0)   /* no group had minimum size of FREQ_THRS */
     {    
-      dist_plausi = 0;
-      dist_plausi_calc_flag = FALSE;
+      
+      flg_DIST_valid_calc = FALSE;
     }
     else  /* at least one group with minimum size of FREQ_THRS was found */
     {
-     u8 disp[4];
-     dist_plausi = sum_dist / l_dist_samples;
-     if(dist_plausi <= 4240)   /* if real measured distance <= 400cm */
-     {
-       u16 temp_dist_plausi_calib;
-       dist_plausi_calib = dist_plausi;       /* 1595 */
-       dist_plausi_calib /= 10;               /* 159 */
-       if((dist_plausi % 10) >= 5)            /* rounding */
-       {
-        dist_plausi_calib++;                  /* 160 */
-       }
-       dist_plausi_calib *= 106;              /* 16960 */
-       temp_dist_plausi_calib = dist_plausi_calib;
-       dist_plausi_calib /= 100;              /* 169 */
-       if((temp_dist_plausi_calib % 100) >= 50)  /* rounding */
-       {
-         dist_plausi_calib++;                 /* 170 */
-       }
-       /* Send validated and calibrated distance measurement through UART */
-       UART1_SendData8((u8)((dist_plausi_calib << 8) >> 8));  /* send LSB first */
-       UART1_SendData8((u8)(dist_plausi_calib >> 8));         /* send MSB second */
-       UART1_SendData8((u8)',');                              /* put commas between values to be compatible with a csv file */
-       /*-----------------------------------------------------------------*/
-       /* Prepare data and display on screen */
-       disp[3] = dist_plausi_calib % 10;
-       dist_plausi_calib /= 10;
-       disp[2] = dist_plausi_calib % 10;
-       dist_plausi_calib /= 10;
-       disp[1] = dist_plausi_calib;
-       disp[0] = 0;
-       SevenSegOut(A[disp[2]] | B[disp[3]]);
-       SevenSegOut(0 | B[disp[1]]);
-       SevenSegRefresh();
-       /*------------------------------------*/
-       dist_plausi_calc_flag = TRUE;
-     }
+      Med_Calib_Round(l_sum_dist, l_dist_samples);
+      flg_DIST_valid_calc = TRUE;
     }
-    dist_samples_read_flag = FALSE;
+    flg_DIST_samples_read = FALSE;
    }
    if(CAPTURE_ovf_err)
    {
@@ -230,10 +218,125 @@ void main(void)
    {
     
    }
+   if(flg_DIST_valid_calc)    /* new validated distance measurement arrived */
+   {
+     LevelReadingAlgo();      /* Level Reading Algorithm */
+     flg_DIST_valid_calc = FALSE;
+   }
   }
 }
+void LevelReadingAlgo()
+{
+  if(algo_curr_phase == REFCALC_PHASE)    /* if a reference calculation is requiered */
+  {
+    if(algo_ref_samples_idx < 6)
+    {
+      algo_ref_samples[algo_ref_samples_idx++] = dist_plausi_calib;
+    }
+    else
+    {
+      u8 l_i, l_j, l_dist_samples;
+      u32 l_sum_dist; 
+      for(l_i = 0; l_i < ALGO_NR_REF_SAMPLES; l_i++)
+      { 
+        for(l_j = 0; l_j < ALGO_NR_REF_SAMPLES; l_j++)
+        {
+          if(l_i != l_j)
+          {
+            if(algo_ref_samples[l_i] >= algo_ref_samples[l_j])
+            {
+              if((algo_ref_samples[l_i] - algo_ref_samples[l_j]) <= (u16)2)
+              {
+                algo_groups_ref_samples[l_i]++;
+              }
+            }
+            else /* rec_distances[i] < rec_distances[j] */
+            {
+              if((algo_ref_samples[l_j] - algo_ref_samples[l_i]) <= (u16)2)
+              {
+                algo_groups_ref_samples[l_i]++;
+              }
+            }
+          }
+        }
+      }
+      /* Add distance samples that have groups of minimum size of FREQ_THRS */
+      for(l_sum_dist = 0, l_dist_samples = 0,l_i = 0; l_i < ALGO_NR_REF_SAMPLES; l_i++)
+      {
+        if(algo_groups_ref_samples[l_i] > 3) 
+        {
+          l_sum_dist += algo_ref_samples[l_i];
+          l_dist_samples++;
+        }
+      }
+      if(l_sum_dist == 0)   /* no group had minimum size of FREQ_THRS */
+      {    
+        /* Calculate reference again */
+        algo_ref_samples_idx = 0; 
+        //dist_plausi = 0;
+        //flg_DIST_valid_calc = FALSE;
+      }
+      else
+      {
+        DisplayDIST((u16)(l_sum_dist / l_dist_samples));
+        algo_curr_phase = DIST_VALID_PHASE;
+      }
+    }
+  }
+  else if(algo_curr_phase == DIST_VALID_PHASE)
+  {
+      
+  }
+}
+void DisplayDIST(u16 distance)
+{
+  u8 disp[4];
+  /* Prepare data and display on screen */
+  disp[3] = (u8)(distance % 10);
+  distance /= 10;
+  disp[2] = (u8)(distance % 10);
+  distance /= 10;
+  disp[1] = (u8)(distance);
+  disp[0] = 0;
+  SevenSegOut(A[disp[2]] | B[disp[3]]);
+  SevenSegOut(0 | B[disp[1]]);
+  SevenSegRefresh();
+}
 
+void SendDIST_UART(u16 distance)
+{
+  /* Send validated and calibrated distance measurement through UART */
+  UART1_SendData8((u8)((distance << 8) >> 8));  /* send LSB first */
+  UART1_SendData8((u8)(distance >> 8));         /* send MSB second */
+  UART1_SendData8((u8)',');                     /* put commas between values to be compatible with a csv file */
+}
 
+u16 Med_Calib_Round(u32 sum_dist, u8 dist_samples)
+{
+  u16 dist_plausi;
+  dist_plausi = (u16)(sum_dist / dist_samples);
+  if(dist_plausi <= 4240)   /* if real measured distance <= 400cm */
+  {
+    u16 temp_dist_plausi_calib;
+    dist_plausi_calib = dist_plausi;       /* 1595 */
+    dist_plausi_calib /= 10;               /* 159 */
+    if((dist_plausi % 10) >= 5)            /* rounding */
+    {
+    dist_plausi_calib++;                  /* 160 */
+    }
+    dist_plausi_calib *= 106;              /* 16960 */
+    temp_dist_plausi_calib = dist_plausi_calib;
+    dist_plausi_calib /= 100;              /* 169 */
+    if((temp_dist_plausi_calib % 100) >= 50)  /* rounding */
+    {
+      dist_plausi_calib++;                 /* 170 */
+    }
+    SendDIST_UART(dist_plausi_calib);
+    //DisplayDIST(dist_plausi_calib);
+    return dist_plausi_calib;
+  }
+  return 0;
+}
 /**
   ******************************************************************************
   * @brief Loop for temporisation
