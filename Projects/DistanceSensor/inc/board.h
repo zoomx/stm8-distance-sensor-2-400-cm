@@ -70,9 +70,12 @@ PB4 - CE   - OUT
 #define BOARD_CE_0       (GPIOB->ODR &= ~GPIO_PIN_4)*/
 
 /* Hardware I2C CONFIG
-PB5: Port B5 / I2C data
 PB4: Port B4 / I2C clock
+PB5: Port B5 / I2C data
 */
+#define I2C_PORT     GPIOB
+#define I2C_SCL_PIN  GPIO_PIN_4
+#define I2C_SDA_PIN  GPIO_PIN_5
 
 /* Hardware SPI CONFIG
 PE5: Port E5 / SPI master/slave select (SPI NSS)
