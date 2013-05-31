@@ -112,5 +112,6 @@ PD7: Port D7 / Top level interrupt / Timer 1 -channel 4 [AFR6]
 #define DISP_LE_0   (DISP_PORT->ODR &= ~DISP_LE_PIN)
 #define DISP_CLK_1   (DISP_PORT->ODR |= DISP_CLK_PIN)
 #define DISP_CLK_0   (DISP_PORT->ODR &= ~DISP_CLK_PIN)
+#define DISP_nOE_STATE (DISP_PORT->IDR & DISP_nOE_PIN)
 
 #endif
