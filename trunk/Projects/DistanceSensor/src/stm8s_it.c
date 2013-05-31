@@ -44,9 +44,9 @@
 #define CAPTURE_ERR_CNT_THRS 10
 #define SENSOR_ALIVE_THRS 1000    /* 1000*2ms = 2000ms */
 u8 delay_cnt_100ms = 0;
-u8 delay_100ms_flag = FALSE;
+u8 flg_DELAY_100ms = FALSE;
 u16 delay_cnt_1s = 0;
-u8 delay_1s_flag = FALSE;
+u8 flg_DELAY_1s = FALSE;
 u8 delay_cnt_50ms = 0;
 u8 delay_50ms_flag = FALSE;
 u8 CAPTURE_new_mes = FALSE;
@@ -565,6 +565,10 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
     DISP_LE_1;
     DISP_CLK_1;
   }*/
+  /* Reduce display brightness - 50% DC */
+  if(DISP_nOE_STATE) DISP_nOE_0;
+  else DISP_nOE_1;
+  /*------------------------------------*/
   /* Ultrasonic sensor alive watchdog */
   if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   /* to be reset in sensor ISR */
   if(sensor_alive_cnt >= SENSOR_ALIVE_THRS)
@@ -574,18 +578,18 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
   /*----------------------------------*/
   /* 1S flag */
   
-  if(delay_1s_flag == FALSE) delay_cnt_1s++;
+  if(flg_DELAY_1s == FALSE) delay_cnt_1s++;
   if(delay_cnt_1s >= DELAY_CNT_1S)
   {
-    delay_1s_flag = TRUE;
+    flg_DELAY_1s = TRUE;
     delay_cnt_1s = 0; 
   }
   /* ------- */
   /* 100mS flag */
-  if(delay_100ms_flag == FALSE) delay_cnt_100ms++;
+  if(flg_DELAY_100ms == FALSE) delay_cnt_100ms++;
   if(delay_cnt_100ms >= DELAY_CNT_100MS)
   {
-    delay_100ms_flag = TRUE;
+    flg_DELAY_100ms = TRUE;
     delay_cnt_100ms = 0; 
   }
   /* -----------*/
