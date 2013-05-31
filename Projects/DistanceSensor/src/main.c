@@ -30,20 +30,18 @@
 #include "ds18b20.h"
 #include "7seg.h"
 
-/* Private functions ---------------------------------------------------------*/
-#define DIST_SAMP (u8)20
-#define FREQ_THRS (u8)(DIST_SAMP/2)
+/* Defines ---------------------------------------------------------*/
+#define DIST_SAMP        (u8)20
+#define FREQ_THRS        (u8)(DIST_SAMP/2)
+#define CALIB_PHASE      (u8)1
+#define DIST_VALID_PHASE (u8)2
 /* Global variables ----------------------------------------------------------*/
+u8 curr_phase = CALIB_PHASE;
 s16 temperature = 0;
-float tempr = 0.0;
 u8 neg_temp_flag = FALSE;
 u8 temperature_read_flag = FALSE;
 u8 dist_samples_read_flag = FALSE;
 u8 dist_plausi_calc_flag = FALSE;
-u8 dist_plausi_array_full = FALSE;
-u16 tim1_cntr = 0;
-u32 period = 0;
-u8 time = 50;
 s32 distance = 0;
 const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
@@ -64,8 +62,6 @@ u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi = 0;
 u16 dist_plausi_calib = 0;
-u16 dist_plausi_array[10];
-u8 idx_dist_plausi = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -89,7 +85,7 @@ void main(void)
 
   while (1)
   {
-   if(delay_1s_flag == TRUE)
+   if(delay_1s_flag)
    {
     temperature = DS18B20_read_16();
 	  if(temperature >= 0)
@@ -105,7 +101,7 @@ void main(void)
     soundspeedkfactorcorrection = soundspeedkfactor * temperature;
     soundspeedkfactorcorrection /= 100;  /* convert from km/s to dm/s for compatibility with soundspeed0degC */
     soundspeed = soundspeed0degC + soundspeedkfactorcorrection;
-	  DS18B20_convert();
+	  DS18B20_convert();     /* issue DS18B20 convert command, to read the results after 1s */
     delay_1s_flag = FALSE;
     temperature_read_flag = TRUE;	
    }
@@ -140,10 +136,13 @@ void main(void)
     u32 sum_dist = 0;
     u8 l_dist_samples = 0;
     u8 i, j;
+    /* Reset group size vector */
     for(i = 0; i < DIST_SAMP; i++)
     {
       freq_rec_dist[i] = 0;
     }
+    /*-------------------------*/
+    /* Calculate group sizes */
     for(i = 0; i < DIST_SAMP; i++)
     { 
       for(j = 0; j < DIST_SAMP; j++)
@@ -167,7 +166,9 @@ void main(void)
         }
       }
     }
-    for(i = 0; i < DIST_SAMP; i++)
+    /*----------------------------------------------------------------------*/
+    /* Add distance samples that have groups of minimum size of FREQ_THRS */
+    for(sum_dist = 0, l_dist_samples = 0,i = 0; i < DIST_SAMP; i++)
     {
       if(freq_rec_dist[i] > FREQ_THRS) 
       {
@@ -175,12 +176,12 @@ void main(void)
         l_dist_samples++;
       }
     }
-    if(sum_dist == 0) 
+    if(sum_dist == 0)   /* no group had minimum size of FREQ_THRS */
     {    
       dist_plausi = 0;
       dist_plausi_calc_flag = FALSE;
     }
-    else 
+    else  /* at least one group with minimum size of FREQ_THRS was found */
     {
      u8 disp[4];
      dist_plausi = sum_dist / l_dist_samples;
@@ -189,27 +190,23 @@ void main(void)
        u16 temp_dist_plausi_calib;
        dist_plausi_calib = dist_plausi;       /* 1595 */
        dist_plausi_calib /= 10;               /* 159 */
-       if((dist_plausi % 10) >= 5)
+       if((dist_plausi % 10) >= 5)            /* rounding */
        {
         dist_plausi_calib++;                  /* 160 */
        }
        dist_plausi_calib *= 106;              /* 16960 */
        temp_dist_plausi_calib = dist_plausi_calib;
        dist_plausi_calib /= 100;              /* 169 */
-       if((temp_dist_plausi_calib % 100) >= 50)
+       if((temp_dist_plausi_calib % 100) >= 50)  /* rounding */
        {
          dist_plausi_calib++;                 /* 170 */
        }
-	     if(idx_dist_plausi < 10) 
-	     {
-	       dist_plausi_array[idx_dist_plausi] = dist_plausi_calib;
-	       idx_dist_plausi++;
-	     }
-	     else
-	     {
-         dist_plausi_array_full = TRUE;
-	     }
-       UART1_SendData8((u8)dist_plausi_calib);
+       /* Send validated and calibrated distance measurement through UART */
+       UART1_SendData8((u8)((dist_plausi_calib << 8) >> 8));  /* send LSB first */
+       UART1_SendData8((u8)(dist_plausi_calib >> 8));         /* send MSB second */
+       UART1_SendData8((u8)',');                              /* put commas between values to be compatible with a csv file */
+       /*-----------------------------------------------------------------*/
+       /* Prepare data and display on screen */
        disp[3] = dist_plausi_calib % 10;
        dist_plausi_calib /= 10;
        disp[2] = dist_plausi_calib % 10;
@@ -219,6 +216,7 @@ void main(void)
        SevenSegOut(A[disp[2]] | B[disp[3]]);
        SevenSegOut(0 | B[disp[1]]);
        SevenSegRefresh();
+       /*------------------------------------*/
        dist_plausi_calc_flag = TRUE;
      }
     }
