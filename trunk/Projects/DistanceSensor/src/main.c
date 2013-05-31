@@ -73,6 +73,7 @@ u16 rec_dist[DIST_SAMP];     /* distance samples */
 u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi_calib = 0;
+u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -205,7 +206,7 @@ void main(void)
     }
     else  /* at least one group with minimum size of FREQ_THRS was found */
     {
-      Med_Calib_Round(l_sum_dist, l_dist_samples);
+      DISTANCE_NEW = Med_Calib_Round(l_sum_dist, l_dist_samples);
       flg_DIST_valid_calc = TRUE;
     }
     flg_DIST_samples_read = FALSE;
@@ -278,14 +279,40 @@ void LevelReadingAlgo()
       }
       else
       {
-        DisplayDIST((u16)(l_sum_dist / l_dist_samples));
+        DISTANCE_NEW = DISTANCE_OLD = (u16)(l_sum_dist / l_dist_samples);
+        DisplayDIST(DISTANCE_NEW);
         algo_curr_phase = DIST_VALID_PHASE;
       }
     }
   }
   else if(algo_curr_phase == DIST_VALID_PHASE)
   {
-      
+    u8 flg_dist_var_too_high = FALSE;
+    DISTANCE_NEW = dist_plausi_calib;
+    DisplayDIST(DISTANCE_NEW);
+    if(DISTANCE_NEW > DISTANCE_OLD)
+    {
+      if(DISTANCE_NEW - DISTANCE_OLD > 3) 
+      {
+        flg_dist_var_too_high = TRUE;
+      }
+    } 
+    else
+    {
+      if(DISTANCE_OLD - DISTANCE_NEW > 3)
+      {
+        flg_dist_var_too_high = TRUE;
+      }
+    }
+    if(flg_dist_var_too_high)
+    {
+      algo_curr_phase = REFCALC_PHASE;
+      algo_ref_samples_idx = 0;
+      SevenSegOut(SymbMinusA | SymbMinusB);
+      SevenSegOut(SymbMinusA | SymbMinusB);
+      SevenSegRefresh();
+    }
+    DISTANCE_OLD = DISTANCE_NEW;
   }
 }
 void DisplayDIST(u16 distance)
