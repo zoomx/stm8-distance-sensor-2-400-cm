@@ -333,8 +333,11 @@ void DisplayDIST(u16 distance)
 void SendDIST_UART(u16 distance)
 {
   /* Send validated and calibrated distance measurement through UART */
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
   UART1_SendData8((u8)((distance << 8) >> 8));  /* send LSB first */
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
   UART1_SendData8((u8)(distance >> 8));         /* send MSB second */
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
   UART1_SendData8((u8)',');                     /* put commas between values to be compatible with a csv file */
 }
 
