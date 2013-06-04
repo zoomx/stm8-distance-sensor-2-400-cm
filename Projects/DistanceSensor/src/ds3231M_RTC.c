@@ -1,62 +1,133 @@
 #include "board.h"
+#include "softi2c.h"
 #include "delay.h"
 
-#define DS3231M_ADR 0xD0
+#define DS3231M_ADR_WR (u8)0xD0
+#define DS3231M_ADR_RD (u8)0xD1
 
-void DS3231M_Flush()
+/* Toggle SCL line (cycles) number of times to flush out from the slave pending data for transmission */
+void DS3231M_Flush(u8 cycles)
 {
-  u8 i;
-  for(i = 0; i < 16; i++)
-  {
-    I2C_PORT->ODR |= I2C_SCL_PIN;
-    DELAY_US(DELAY_6US);
-    I2C_PORT->ODR &= ~(I2C_SCL_PIN);
-    DELAY_US(DELAY_6US);
-  }
+  I2C_Flush(cycles);
 }
 
+/* Read a byte from slave from current memory location */
 u8 DS3231M_ReadByte()
 {
-  u8 tmp;
-  while(I2C->SR3 & I2C_SR3_BUSY)
+  u8 tmp_data, slave_ack;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
+  if(slave_ack == ACK)
   {
-		I2C->CR2 |= I2C_CR2_STOP;                   				// Generate stop here (STOP=1)
-    while(I2C->CR2 & I2C_CR2_STOP); 				// Wait until stop is performed
+    tmp_data = I2C_ReadByte(NACK);
+  }
+  I2C_Stop();
+  return tmp_data;
+}
+
+/* Read a byte from slave from address-adr */
+u8 DS3231M_ReadByteAdr(u8 adr)
+{
+  u8 tmp_data, slave_ack;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
+  if(slave_ack == ACK)
+  {
+    slave_ack = I2C_WriteByte(adr);
+	  if(slave_ack == ACK)
+	  {
+	    I2C_Start();
+	    slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
+	    if(slave_ack == ACK)
+	    {
+	      tmp_data = I2C_ReadByte(NACK);
+	    }
+	  }
+  }
+  I2C_Stop();
+  return tmp_data;
+}
+
+/* Read multiple bytes from slave from address-adr into data vector */
+void DS3231_ReadBytes(u8 adr, u8* data, u8 size)
+{
+  u8 slave_ack, i;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
+  if(slave_ack == ACK)
+  {
+    slave_ack = I2C_WriteByte(adr);
+	if(slave_ack == ACK)
+	{
+	  I2C_Start();
+	  slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
+	  if(slave_ack == ACK)
+	  {
+	    for(i = 0; i < size - 1; i++)
+		{
+		  data[i] = I2C_ReadByte(ACK);
+		}
+		data[size-1] = I2C_ReadByte(NACK);
+	  }
 	}
-  I2C->CR2 |= I2C_CR2_ACK; 
-  //I2C_GenerateSTART(ENABLE);
-  /*while (I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT) != SUCCESS);*/   /* wait for EV5 - start condition released */
-  I2C->CR2 |= I2C_CR2_START;
-  while((I2C->SR1 & I2C_SR1_SB)==0);
-  I2C_Send7bitAddress(DS3231M_ADR, I2C_DIRECTION_RX);
-  /*while (I2C_CheckEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED) != SUCCESS);*/   /* wait for EV6 - slave acknowledge masters' address */
-  while(!(I2C->SR1 & I2C_SR1_ADDR));
-  DELAY_US(DELAY_6US);
-  I2C->SR3;
-  while (I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_RECEIVED) != SUCCESS);            /* wait for EV7 - byte received from slave */
-  tmp = I2C_ReceiveData();
-  I2C_GenerateSTOP(ENABLE);
-  return tmp;
+  }
+  I2C_Stop();
 }
 
-u8 DS3231M_ReadByteAdr(u8 _adr)
+/* Write a byte of data to slave at address-adr */
+u8 DS3231M_WriteByte(u8 adr, u8 data)
 {
-  u8 tmp;
-  I2C_GenerateSTART(ENABLE);
-  I2C_Send7bitAddress(DS3231M_ADR, I2C_DIRECTION_TX);
-  I2C_SendData(_adr);
-  I2C_GenerateSTART(ENABLE);
-  I2C_Send7bitAddress(DS3231M_ADR, I2C_DIRECTION_RX);
-  tmp = I2C_ReceiveData();
-  I2C_GenerateSTOP(ENABLE);
-  return tmp;
+  u8 slave_ack;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
+  if(!slave_ack) 
+  {
+    slave_ack = I2C_WriteByte(adr);
+	if(!slave_ack)
+	{
+	  slave_ack = I2C_WriteByte(data);
+	}
+  }
+  I2C_Stop();
+  return slave_ack;
 }
 
-void DS3231M_WriteBye(u8 _adr, u8 _data)
+/* write multiple bytes to slave at address-adr */
+u8 DS3231M_WriteBytes(u8 adr, u8* data, u8 size)
 {
-  I2C_GenerateSTART(ENABLE);
-  I2C_Send7bitAddress(DS3231M_ADR, I2C_DIRECTION_TX);
-  I2C_SendData(_adr);
-  I2C_SendData(_data);
-  I2C_GenerateSTOP(ENABLE);
+  u8 slave_ack, i;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
+  if(slave_ack == ACK) 
+  {
+    for(i = 0; i < size; i++)
+	{
+	  slave_ack = I2C_WriteByte(data[i]);
+	  if(slave_ack == NACK) break;
+	}
+  }
+  I2C_Stop();
+  return slave_ack;
+}
+
+void DS3231M_ReadTimeDate(u8* data)
+{
+  u8 tmp_data, slave_ack;
+  I2C_Start();
+  slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
+  if(slave_ack == ACK)
+  {
+    slave_ack = I2C_WriteByte(0x00);  /* Read from register with address 0x00 */
+	if(slave_ack == ACK)
+	{
+	  I2C_Start();
+	  slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
+	  if(slave_ack == ACK)
+	  {
+	    tmp_data = I2C_ReadByte(ACK);  /* Read seconds */
+		
+	  }
+	}
+  }
+  I2C_Stop();
 }
