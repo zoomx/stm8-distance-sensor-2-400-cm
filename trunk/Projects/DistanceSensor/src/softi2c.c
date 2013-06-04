@@ -54,6 +54,18 @@ void I2C_Stop()
   DELAY_US(11);  /*2uS*/
 }
 
+void I2C_Flush(u8 cycles)
+{
+  u8 i;
+  for(i = 0; i < cycles; i++)
+  {
+    SCL_LOW;
+	  DELAY_US(11);  /*2uS*/
+	  SCL_HIGH;
+	  DELAY_US(11);  /*2uS*/
+  }
+}
+
 u8 I2C_WriteByte(u8 data)
 {
   u8 i, tmp;
