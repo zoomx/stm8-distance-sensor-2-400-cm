@@ -6,6 +6,8 @@
 
 void I2C_Start(void);
 void I2C_Stop(void);
+void I2C_Flush(u8);
 u8 I2C_WriteByte(u8);
+u8 I2C_ReadByte(u8);
 
 #endif
