@@ -76,6 +76,8 @@ u16 dist_plausi_calib = 0;
 u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
 u8 RTCdata[10];
 u8 RTCdataidx = 0;
+volatile u8 RTCadr = 0x01;
+volatile u8 RTCSetMin=0, RTCSetHour=0;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -99,7 +101,9 @@ void main(void)
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
   DS18B20_convert();
-  DS3231M_Flush(10);
+  //DS3231M_Flush(10);
+  DS3231M_WriteByte(0x01, RTCSetMin);
+  DS3231M_WriteByte(0x02, RTCSetHour);
   for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
   {
     algo_groups_ref_samples[i] = 0;
@@ -131,7 +135,7 @@ void main(void)
    }
    if(flg_DELAY_100ms && flg_TEMP_read)
    {
-     if(RTCdataidx < 10) RTCdata[RTCdataidx++] = DS3231M_ReadByteAdr(0x0E);
+     if(RTCdataidx < 10) RTCdata[RTCdataidx++] = DS3231M_ReadByteAdr(RTCadr);
      SONAR_TRIG_ON;
      DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;
