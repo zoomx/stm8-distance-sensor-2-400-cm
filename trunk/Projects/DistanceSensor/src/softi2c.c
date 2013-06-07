@@ -13,12 +13,12 @@
   HIGH is one such unique case. This situation indicates a
   START condition.
   */
-#define I2C_START() (SCL_HIGH; DELAY_US(11); SDA_LOW; DELAY_US(11))
+#define I2C_START() (SCL_HIGH; DELAY_US(DELAY_6US); SDA_LOW; DELAY_US(DELAY_6US))
 /*
   A LOW to HIGH transition on the SDA line while SCL is
   HIGH defines a STOP condition.
   */
-#define I2C_STOP()  (SDA_LOW; DELAY_US(11); SCL_HIGH; DELAY_US(11); SDA_HIGH; DELAY_US(11))
+#define I2C_STOP()  (SDA_LOW; DELAY_US(DELAY_6US); SCL_HIGH; DELAY_USDELAY_6US); SDA_HIGH; DELAY_US(DELAY_6US))
 
 /*
 The data on the SDA line must be stable during the HIGH
@@ -34,10 +34,11 @@ void I2C_Start()
   HIGH is one such unique case. This situation indicates a
   START condition.
   */
+  DELAY_US(DELAY_6US);
   SCL_HIGH;
-  DELAY_US(11);  /*2uS*/
+  DELAY_US(DELAY_6US); 
   SDA_LOW;
-  DELAY_US(11);  /*2uS*/
+  DELAY_US(DELAY_6US); 
 }
 
 void I2C_Stop()
@@ -46,12 +47,13 @@ void I2C_Stop()
   A LOW to HIGH transition on the SDA line while SCL is
   HIGH defines a STOP condition.
   */
+  DELAY_US(DELAY_6US);
   SDA_LOW;
-  DELAY_US(11);  /*2uS*/
+  DELAY_US(DELAY_6US);  /*2uS*/
   SCL_HIGH;
-  DELAY_US(11);  /*2uS*/
+  DELAY_US(DELAY_6US);  /*2uS*/
   SDA_HIGH;
-  DELAY_US(11);  /*2uS*/
+  DELAY_US(DELAY_6US);  /*2uS*/
 }
 
 void I2C_Flush(u8 cycles)
@@ -60,9 +62,9 @@ void I2C_Flush(u8 cycles)
   for(i = 0; i < cycles; i++)
   {
     SCL_LOW;
-	  DELAY_US(11);  /*2uS*/
+	  DELAY_US(DELAY_6US);  /*2uS*/
 	  SCL_HIGH;
-	  DELAY_US(11);  /*2uS*/
+	  DELAY_US(DELAY_6US);  /*2uS*/
   }
 }
 
@@ -70,29 +72,31 @@ u8 I2C_WriteByte(u8 data)
 {
   u8 i, tmp;
   SCL_LOW;
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
   for(i = 0; i < 8; i++)  /* send 8 bits of data */
   {
     if(data & 0x80)
-	{
+	  {
       SDA_HIGH;	
-	}
-	else
-	{
-	  SDA_LOW;
-	}
-	DELAY_US(11);
-	SCL_HIGH;
-	DELAY_US(11);
-	SCL_LOW;
-	DELAY_US(11);
+	  }
+	  else
+	  {
+	    SDA_LOW;
+	  }
+	  DELAY_US(DELAY_6US);
+	  SCL_HIGH;
+	  DELAY_US(DELAY_6US);
+	  SCL_LOW;
+	  DELAY_US(DELAY_6US);
     data <<= 1;
   }
   SDA_HIGH;
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
   SCL_HIGH;
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
   tmp = SDA_READ;  /* read slave acknowledge: 0-slave ACK, 1-slave NACK */
+  SCL_LOW;
+  DELAY_US(DELAY_6US);
   return tmp;  /* 0-slave ACK, 1-slave NACK */
 }
 
@@ -103,13 +107,13 @@ u8 I2C_ReadByte(u8 ack)
   for(i = 0; i < 8; i++)
   {
     SCL_LOW;
-	DELAY_US(11);
-	SCL_HIGH;
-	DELAY_US(11);
-	if(SDA_READ) data |= (0x80 >> i);
+	  DELAY_US(DELAY_6US);
+	  SCL_HIGH;
+	  DELAY_US(DELAY_6US);
+	  if(SDA_READ) data |= (0x80 >> i);
   }
   SCL_LOW;
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
   if(ack) 
   {
    SDA_LOW;
@@ -118,10 +122,10 @@ u8 I2C_ReadByte(u8 ack)
   {
     SDA_HIGH;
   }
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
   SCL_HIGH;
-  DELAY_US(11);
-  SCL_LOW;
-  DELAY_US(11);
+  DELAY_US(DELAY_6US);
+  //SCL_LOW;
+  //DELAY_US(DELAY_6US);
   return data;
 }
