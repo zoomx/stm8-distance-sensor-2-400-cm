@@ -12,10 +12,11 @@
 #define DELAY_9US   48
 #define DELAY_55US  293
 
+#define DELAY_2US   11
+
 void delay_ms(u16);
 
 
-#define DELAY_US( loops ) \
-        _asm("$N: \n decw X \n jrne $L \n nop", (u16)loops);
+#define DELAY_US( loops ) _asm("$N: \n decw X \n jrne $L \n nop", (u16)loops);
 
 #endif
