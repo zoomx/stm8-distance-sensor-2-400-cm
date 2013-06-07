@@ -118,16 +118,16 @@ void DS3231M_ReadTimeDate(u8* data)
   if(slave_ack == ACK)
   {
     slave_ack = I2C_WriteByte(0x00);  /* Read from register with address 0x00 */
-	if(slave_ack == ACK)
-	{
-	  I2C_Start();
-	  slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
 	  if(slave_ack == ACK)
 	  {
-	    tmp_data = I2C_ReadByte(ACK);  /* Read seconds */
+	    I2C_Start();
+	    slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
+	    if(slave_ack == ACK)
+	    {
+	      tmp_data = I2C_ReadByte(ACK);  /* Read seconds */
 		
+	    }
 	  }
-	}
   }
   I2C_Stop();
 }
