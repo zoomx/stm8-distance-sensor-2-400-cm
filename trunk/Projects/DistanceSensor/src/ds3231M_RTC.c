@@ -83,10 +83,10 @@ u8 DS3231M_WriteByte(u8 adr, u8 data)
   if(!slave_ack) 
   {
     slave_ack = I2C_WriteByte(adr);
-	if(!slave_ack)
-	{
-	  slave_ack = I2C_WriteByte(data);
-	}
+	  if(!slave_ack)
+	  {
+	    slave_ack = I2C_WriteByte(data);
+	  }
   }
   I2C_Stop();
   return slave_ack;
