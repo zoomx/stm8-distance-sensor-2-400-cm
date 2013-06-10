@@ -29,6 +29,7 @@
 #include "delay.h"
 #include "ds18b20.h"
 #include "7seg.h"
+#include "softi2c.h"
 #include "ds3231m_rtc.h"
 
 void DisplayDIST(u16);
@@ -52,6 +53,7 @@ u8 flg_TEMP_neg = FALSE;
 u8 flg_TEMP_read = FALSE;
 u8 flg_DIST_samples_read = FALSE;
 u8 flg_DIST_valid_calc = FALSE;
+u8 flg_RTC_settime = FALSE;
 s32 distance = 0;
 const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
 const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
@@ -76,7 +78,7 @@ u16 dist_plausi_calib = 0;
 u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
 u8 RTCdata[10];
 u8 RTCdataidx = 0;
-volatile u8 RTCadr = 0x01;
+u8 RTCadr[4] = {0x00, 0x01, 0x02, 0x03};
 volatile u8 RTCSetMin=0, RTCSetHour=0;
 /* Public functions ----------------------------------------------------------*/
 /**
@@ -102,8 +104,6 @@ void main(void)
   SevenSegRefresh();
   DS18B20_convert();
   //DS3231M_Flush(10);
-  DS3231M_WriteByte(0x01, RTCSetMin);
-  DS3231M_WriteByte(0x02, RTCSetHour);
   for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
   {
     algo_groups_ref_samples[i] = 0;
@@ -113,6 +113,12 @@ void main(void)
   
   while (1)
   {
+   if(flg_RTC_settime)
+   {
+     //DS3231M_WriteByte(0x01, RTCSetMin);
+     //DS3231M_WriteByte(0x02, RTCSetHour);
+     flg_RTC_settime = FALSE;
+   }
    if(flg_DELAY_1s)
    {
     temperature = DS18B20_read_16();
@@ -135,7 +141,12 @@ void main(void)
    }
    if(flg_DELAY_100ms && flg_TEMP_read)
    {
-     if(RTCdataidx < 10) RTCdata[RTCdataidx++] = DS3231M_ReadByteAdr(RTCadr);
+     if(RTCdataidx < 10) 
+     {
+       I2C_WriteBytes(RTCadr, 1, 0xD0);
+       I2C_ReadBytes(RTCdata, 3, 0XD0);
+       RTCdataidx++;
+     }
      SONAR_TRIG_ON;
      DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;

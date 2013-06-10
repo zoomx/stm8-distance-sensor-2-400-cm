@@ -12,10 +12,10 @@ void DS3231M_Flush(u8 cycles)
 }
 
 /* Read a byte from slave from current memory location */
-u8 DS3231M_ReadByte()
+/*u8 DS3231M_ReadByte()
 {
   u8 tmp_data, slave_ack;
-  I2C_Start();
+  I2C_StartCond();
   slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
   if(slave_ack == ACK)
   {
@@ -23,10 +23,10 @@ u8 DS3231M_ReadByte()
   }
   I2C_Stop();
   return tmp_data;
-}
+}*/
 
 /* Read a byte from slave from address-adr */
-u8 DS3231M_ReadByteAdr(u8 adr)
+/*u8 DS3231M_ReadByteAdr(u8 adr)
 {
   u8 tmp_data, slave_ack;
   I2C_Start();
@@ -46,10 +46,10 @@ u8 DS3231M_ReadByteAdr(u8 adr)
   }
   I2C_Stop();
   return tmp_data;
-}
+}*/
 
 /* Read multiple bytes from slave from address-adr into data vector */
-void DS3231_ReadBytes(u8 adr, u8* data, u8 size)
+/*void DS3231_ReadBytes(u8 adr, u8* data, u8 size)
 {
   u8 slave_ack, i;
   I2C_Start();
@@ -72,10 +72,10 @@ void DS3231_ReadBytes(u8 adr, u8* data, u8 size)
 	}
   }
   I2C_Stop();
-}
+}*/
 
 /* Write a byte of data to slave at address-adr */
-u8 DS3231M_WriteByte(u8 adr, u8 data)
+/*u8 DS3231M_WriteByte(u8 adr, u8 data)
 {
   u8 slave_ack;
   I2C_Start();
@@ -90,10 +90,10 @@ u8 DS3231M_WriteByte(u8 adr, u8 data)
   }
   I2C_Stop();
   return slave_ack;
-}
+}*/
 
 /* write multiple bytes to slave at address-adr */
-u8 DS3231M_WriteBytes(u8 adr, u8* data, u8 size)
+/*u8 DS3231M_WriteBytes(u8 adr, u8* data, u8 size)
 {
   u8 slave_ack, i;
   I2C_Start();
@@ -108,26 +108,26 @@ u8 DS3231M_WriteBytes(u8 adr, u8* data, u8 size)
   }
   I2C_Stop();
   return slave_ack;
-}
+}*/
 
-void DS3231M_ReadTimeDate(u8* data)
+/*void DS3231M_ReadTimeDate(u8* data)
 {
   u8 tmp_data, slave_ack;
   I2C_Start();
   slave_ack = I2C_WriteByte(DS3231M_ADR_WR);
   if(slave_ack == ACK)
   {
-    slave_ack = I2C_WriteByte(0x00);  /* Read from register with address 0x00 */
+    slave_ack = I2C_WriteByte(0x00);  // Read from register with address 0x00
 	  if(slave_ack == ACK)
 	  {
 	    I2C_Start();
 	    slave_ack = I2C_WriteByte(DS3231M_ADR_RD);
 	    if(slave_ack == ACK)
 	    {
-	      tmp_data = I2C_ReadByte(ACK);  /* Read seconds */
+	      tmp_data = I2C_ReadByte(ACK);  // Read seconds
 		
 	    }
 	  }
   }
   I2C_Stop();
-}
+}*/
