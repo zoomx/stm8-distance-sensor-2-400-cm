@@ -12,7 +12,8 @@
 #define DELAY_9US   48
 #define DELAY_55US  293
 
-#define DELAY_2US   11
+#define I2C_DELAY      6    /* 1uS - 5.33 */
+#define SCL_SDA_DELAY  8  
 
 void delay_ms(u16);
 
