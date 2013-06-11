@@ -29,7 +29,6 @@
 #include "delay.h"
 #include "ds18b20.h"
 #include "7seg.h"
-#include "softi2c.h"
 #include "ds3231m_rtc.h"
 
 void DisplayDIST(u16);
@@ -115,13 +114,16 @@ void main(void)
   {
    if(flg_RTC_settime)
    {
-     //DS3231M_WriteByte(0x01, RTCSetMin);
-     //DS3231M_WriteByte(0x02, RTCSetHour);
+     //DS3231M_SetTime();
+    DS3231M_SetDate();
      flg_RTC_settime = FALSE;
    }
    if(flg_DELAY_1s)
    {
     temperature = DS18B20_read_16();
+    DS3231M_GetTime();
+    DS3231M_GetDate();
+    DS3231M_GetTemperature();
 	  if(temperature >= 0)
     {
 	    flg_TEMP_neg = 0;
@@ -141,12 +143,6 @@ void main(void)
    }
    if(flg_DELAY_100ms && flg_TEMP_read)
    {
-     if(RTCdataidx < 10) 
-     {
-       I2C_WriteBytes(RTCadr, 1, 0xD0);
-       I2C_ReadBytes(RTCdata, 3, 0XD0);
-       RTCdataidx++;
-     }
      SONAR_TRIG_ON;
      DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;
