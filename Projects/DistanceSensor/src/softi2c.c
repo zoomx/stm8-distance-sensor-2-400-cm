@@ -25,9 +25,9 @@ void I2C_Flush(u8 cycles)
   for(i = 0; i < cycles; i++)
   {
     SCL_LOW;
-	  DELAY_US(DELAY_6US);  /*2uS*/
-	  SCL_HIGH;
-	  DELAY_US(DELAY_6US);  /*2uS*/
+    DELAY_US(DELAY_6US);  /*2uS*/
+    SCL_HIGH;
+    DELAY_US(DELAY_6US);  /*2uS*/
   }
 }
 
@@ -164,9 +164,11 @@ u8 I2C_ReadByte(u8* rcvdata, u8 bytes, u8 index)
 /*! \brief Writes data from buffer.
     \param indata Pointer to data buffer
     \param bytes  Number of bytes to transfer
+	\param slave_adr  Slave address on I2C bus
+	\param slave_reg  Slave memory address from which the reading is started
     \return 1 if successful, otherwise 0
  */
-u8 I2C_WriteBytes(u8* indata, u8 bytes, u8 slave_adr)
+u8 I2C_WriteBytes(u8* indata, u8 bytes, u8 slave_adr, u8 slave_reg)
 {
 	u8 index, ack = 0;
 	
@@ -178,6 +180,10 @@ u8 I2C_WriteBytes(u8* indata, u8 bytes, u8 slave_adr)
 	{
 		return 0;	
 	}
+	if(!I2C_WriteByte(slave_reg))
+    {
+      return 0;	
+    }
 	for(index = 0; index < bytes; index++)
 	{
 		 ack = I2C_WriteByte(indata[index]);
@@ -196,11 +202,28 @@ u8 I2C_WriteBytes(u8* indata, u8 bytes, u8 slave_adr)
 /*! \brief Reads data into buffer.
     \param data Pointer to data buffer
     \param bytes  Number of bytes to read
+	\param slave_adr  Slave address on I2C bus
+	\param slave_reg  Slave memory address from which the reading is started
     \return 1 if successful, otherwise 0
  */
-u8 I2C_ReadBytes(u8* data, u8 bytes, u8 slave_adr)
+u8 I2C_ReadBytes(u8* data, u8 bytes, u8 slave_adr, u8 slave_reg)
 {
   u8 index, success = 0;
+  if(!I2C_StartCond())
+  {
+    return 0;
+  }
+  if(!I2C_WriteByte(slave_adr | WRITE))
+  {
+    return 0;	
+  }
+  if(!I2C_WriteByte(slave_reg))
+  {
+    return 0;	
+  }
+  write_scl(1);
+	DELAY_US(SCL_SDA_DELAY);
+	SDA_HIGH;
   if(!I2C_StartCond())
   {
     return 0;
