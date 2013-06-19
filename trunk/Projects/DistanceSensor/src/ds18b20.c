@@ -1,118 +1,108 @@
-#define _DS18B20_LOCAL
-
-#include "ds18b20.h"
-#include "delay.h"
 #include "board.h"
+#include "onewire.h"
+
+/* ROM COMMANDS */
+#define SEARCH_ROM        0XF0
+#define READ_ROM          0x33
+#define MATCH_ROM         0x55
+#define SKIP_ROM          0xCC
+#define ALARM_SEARCH      0XEC
+/* FUNCTION COMMANDS */
+#define CONVERT_T          0x44
+#define WRITE_SCRATCHPAD   0x4E
+#define READ_SCRATCHPAD    0xBE
+#define COPY_SCRATCHPAD    0X48
+#define RECALL_EE          0XB8
+#define READ_POWER_SUPPLY  0XB4
 
 /*
-Read ROM              [33H]
-Match ROM             [55H]
-Skip ROM              [CCH]
-Search ROM            [F0H]
-Alarm search          [ECH]
-
-Write Scratchpad      [4EH]
-Read Scratchpad       [BEH]
-Copy Scratchpad       [48H]
-Convert Temperature   [44H]
-Recall EPROM          [B8H]
-Read Power supply     [B4H]
+Function to init all temperature sensors from the 1-wire network with following settings: 12bit temperature resolution (750ms conversion time)
 */
-
-#define SKIP_ROM_COMMAND          0xCC
-#define CONVERT_T_COMMAND         0x44
-#define WRITE_SCRATCHPAD_COMMAND  0x4E
-#define READ_SCRATCHPAD_COMMAND   0xBE
-
-
-u8 OW_reset(void)
+u8 DS18B20_All_init(void)
 {
-  u8 result;
-  //OW_OUT();
-  OW_LOW();                /* master - drive bus low */
-  DELAY_US(DELAY_480US);   /* master - wait for 480us (H-480,480,640) */
-  OW_HIGH();
-  //OW_IN();               /* master - release bus */
-  DELAY_US(DELAY_70US);    /* master - wait for 70us (I-63,70,78) */
-  result = OW_READ();
-  DELAY_US(DELAY_410US);   /* master - wait for 410us (J-410,410,N/A) */
-  OW_HIGH();               /* master - release bus */
-  //OW_OUT();
-  return result;
+  if(!OW_reset()) return 0;
+  OW_write_8(SKIP_ROM);           /* SKIP ROM command - used when only one sensor on bus */
+  OW_write_8(WRITE_SCRATCHPAD);   /* WRITE SCRATCHPAD command */
+  OW_write_8(0x00);               /* TH register or User Byte 1 */
+  OW_write_8(0x00);               /* TL register or User Byte 2 */
+  OW_write_8(0x7F);               /* configuration register: 12 bit resolution - 750ms conversion time */
+  return 1;
 }
 
-void OW_write_8(u8 data)
+/*
+Function to issue a CONVERT TEMPERATURE command to all temperature sensors from the 1-wire network
+*/
+u8 DS18B20_All_convert(void)
 {
-  u8 i;
-  for(i=0; i<8; i++)
-  {
-    if(data & 0x01)
-	{ /* write '1' */
-	  OW_LOW();               /* master - drive bus low */
-	  DELAY_US(DELAY_6US);    /* master - wait 6us (A-5,6,15) */
-	  OW_HIGH();              /* master - release bus */
-	  DELAY_US(DELAY_64US);   /* master - wait 64us (B-59,64,N/A) */
-	}
-    else
-	{ /* write '0' */
-	  OW_LOW();                /* master - drive bus low */
-	  DELAY_US(DELAY_60US);    /* master - wait 60us (C-60,60,120) */
-	  OW_HIGH();               /* master - release bus */
-	  DELAY_US(DELAY_10US);    /* master - wait 10us (D-8,10,N/A) */
-	}
-    data >>= 1;
-  }
-}
-u8 OW_read_8(void)
-{
-  u8 i;
-  u8 result = 0;
-
-  for(i=0; i<8; i++)
-  {
-    result >>= 1;
-	  OW_LOW();                 /* master - drive bus low */
-	  DELAY_US(DELAY_6US);      /* master - wait 6us (A-5,6,15) */
-	  OW_HIGH();                /* master - release bus */
-	  DELAY_US(DELAY_9US);       /* master - wait 9us (E-5,9,12) */
-    if(OW_READ())  result |= 0x80;
-    DELAY_US(DELAY_55US);     /* master - wait 55us (F-50,55,N/A) */
-  }
-  return (result);
+  if(!OW_reset()) return 0;
+  OW_write_8(SKIP_ROM);
+  OW_write_8(CONVERT_T);
+  return 1;
 }
 
-void DS18B20_init(void)
+/* 
+Function to read temperature when only one temperature sensor device is present in the network
+Function doesn't send ROM ID code, it issues SKIP ROM command
+If multiple sensors are present in the network data collision will occur
+This function is an optimisation when you have a single temperature sensor, no ROM ID needed tot be send therefore faster
+Parameters:
+  result: pointer to an s16 variable into which the result will be stored (temperature read from the sensor)
+ */
+u8 DS18B20_All_Read_Temp(s16* result)
 {
-  u8 stat = OW_reset();
-  OW_write_8(SKIP_ROM_COMMAND);   /* SKIP ROM command - used when only one sensor on bus */
-  OW_write_8(WRITE_SCRATCHPAD_COMMAND);   /* WRITE SCRATCHPAD command */
-  OW_write_8(0x00);   /* TH register or User Byte 1 */
-  OW_write_8(0x00);   /* TL register or User Byte 2 */
-  OW_write_8(0x7F);   /* configuration register: 12 bit resolution - 750ms conversion time */
+  s16 tmp;
+  if(!OW_reset()) return 0;
+  OW_write_8(SKIP_ROM);
+  OW_write_8(READ_SCRATCHPAD);
+  tmp = OW_read_8();
+  tmp |= OW_read_8() << 8;
+  *result = tmp;
+  return 1;
 }
 
-void DS18B20_convert(void)
+/*
+Function to read one byte from temperature sensor scratchpad memory location 0x00
+This function is designed to be used in networks with just a single temperature sensor
+*/
+u8 DS18B20_All_Read_Byte(u8* result)
 {
-  OW_reset();
-  OW_write_8(SKIP_ROM_COMMAND);
-  OW_write_8(CONVERT_T_COMMAND);
+  if(!OW_reset()) return 0;
+  OW_write_8(SKIP_ROM);
+  OW_write_8(READ_SCRATCHPAD);
+  *result = OW_read_8();
+  return 1;
 }
 
-s16 DS18B20_read_16(void)
+/*
+Function to read temperature from a specific sensor by ROM ID
+Function designed to work in an 1-wire network with multiple sensors
+*/
+u8 DS18B20_Read_Temp(s16* result, u8* ROM_ID)
 {
-  s16 res;
-  OW_reset();
-  OW_write_8(SKIP_ROM_COMMAND);
-  OW_write_8(READ_SCRATCHPAD_COMMAND);
-  res = OW_read_8();
-  res |= OW_read_8() << 8;
-  return (s16)res;
+  s16 tmp, i;
+  if(!OW_reset()) return 0;
+  OW_write_8(MATCH_ROM);
+  for(i = 0; i < 8; i++)
+    OW_write_8(ROM_ID[i]);
+  OW_write_8(READ_SCRATCHPAD);
+  tmp = OW_read_8();
+  tmp |= OW_read_8() << 8;
+  *result = tmp;
+  return 1;
 }
-u8 DS18B20_read_8(void)
+
+/*
+Function to read ROM ID code from temperature sensor
+Parameters:
+  ROM_ID: pointer to an 8 element u8 array into which the ROM code will be stored
+*/
+u8 DS18B20_Read_ROM_ID(u8* ROM_ID)
 {
-  OW_reset();
-  OW_write_8(SKIP_ROM_COMMAND);
-  OW_write_8(READ_SCRATCHPAD_COMMAND);
-  return OW_read_8();
+  s16 tmp, i;
+  if(!OW_reset()) return 0;
+  OW_write_8(READ_ROM);
+  for(i = 0; i < 8; i++)
+    ROM_ID[i] = OW_read_8();
+  return 1;
 }
 
