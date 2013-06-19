@@ -14,7 +14,7 @@
   * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-	* FOR MORE INFORMATION PLEASE READ CAREFULLY THE LICENSE AGREEMENT FILE LOCATED 
+  * FOR MORE INFORMATION PLEASE READ CAREFULLY THE LICENSE AGREEMENT FILE LOCATED 
   * IN THE ROOT DIRECTORY OF THIS FIRMWARE PACKAGE.
   *
   * <h2><center>&copy; COPYRIGHT 2008 STMicroelectronics</center></h2>
@@ -25,6 +25,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "board.h" 
 #include "stm8s_it.h"
+#include "cyclic.h"
 #include "config.h"
 #include "delay.h"
 #include "ds18b20.h"
@@ -42,43 +43,47 @@ void LevelReadingAlgo(void);
 #define REFCALC_PHASE       (u8)1
 #define DIST_VALID_PHASE    (u8)2
 #define ALGO_NR_REF_SAMPLES (u8)6
+
+/* CONSTANTS ---------------------------------------------------------------*/
+const u16 soundspeed0degC = 3313;       /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
+const u16 soundspeedkfactor = 606;      /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
+const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
+const u8 sensor_calib_value = 106;      /* adjust at 106% of sensor value*/
+
+/* Display character constants */
+const u8 SymbComma =   0x80; 
+const u16 SymbU =      0x0C70;
+const u16 SymbMinusA = 0x0100;
+const u16 SymbMinusB = 0x8000;
+const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
+const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
+
+/* DS18B20 ROM codes */
+const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};
+
 /* Global variables ----------------------------------------------------------*/
 u8 algo_curr_phase = REFCALC_PHASE;
 u16 algo_ref_samples[ALGO_NR_REF_SAMPLES];
 u8 algo_ref_samples_idx = 0;
 u8 algo_groups_ref_samples[ALGO_NR_REF_SAMPLES];
 s16 temperature = 0;
-u8 flg_TEMP_neg = FALSE;
-u8 flg_TEMP_read = FALSE;
-u8 flg_DIST_samples_read = FALSE;
-u8 flg_DIST_valid_calc = FALSE;
-u8 flg_RTC_settime = FALSE;
 s32 distance = 0;
-const u16 soundspeed0degC = 3313;   /* speed of sound at 0 degrees Celsius: 331.3m/s 3313dm/s */
-const u16 soundspeedkfactor = 606;  /* c_air = 331.3 + 0.606C^-1 * dT_0_C [km/s]v*/
-const u8 valid_sample_difference = 20;  /* all valid samples must be within +/- 30mm of each other */
-const u8 sensor_calib_value = 106;  /* adjust at 106% of sensor value*/
-/* Display character constants */
-const u8 SymbComma = 0x80; 
-const u16 SymbU = 0x0C70;
-const u16 SymbMinusA = 0x0100;
-const u16 SymbMinusB = 0x8000;
-const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, \
-                            0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
-const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, \
-                            0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
-/* --------------------------- */
 s16 soundspeedkfactorcorrection = 0;
-u16 soundspeed = 0;                 /* [dm/s] - tens of centimeters/ s */
+u16 soundspeed = 0;          /* [dm/s] - tens of centimeters/ s */
 u16 rec_dist[DIST_SAMP];     /* distance samples */
 u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi_calib = 0;
 u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
-u8 RTCdata[10];
-u8 RTCdataidx = 0;
-u8 RTCadr[4] = {0x00, 0x01, 0x02, 0x03};
-volatile u8 RTCSetMin=0, RTCSetHour=0;
+
+u8 ROM_ID2[8];
+/* FLAGS */
+volatile _Bool FLAG_temp_neg = FALSE;
+volatile _Bool FLAG_temp_read = FALSE;
+volatile _Bool FLAG_dist_samp_read = FALSE;
+volatile _Bool FLAG_dist_valid_calc = FALSE;
+volatile _Bool FLAG_rtc_settime = FALSE;
+volatile _Bool FLAG_ds18b20_err = FALSE;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -97,60 +102,61 @@ void main(void)
   //SevenSegInit();
   //SevenSegRefresh();
   DELAY_US(1000);
-  DS18B20_init();
+  DS18B20_All_init();
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
-  DS18B20_convert();
-  //DS3231M_Flush(10);
+  //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
+  FLAG_ds18b20_err = DS18B20_All_convert();
   for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
   {
     algo_groups_ref_samples[i] = 0;
   }
 
-  enableInterrupts();	
+  enableInterrupts();
   
   while (1)
   {
-   if(flg_RTC_settime)
+   if(FLAG_rtc_settime)
    {
      //DS3231M_SetTime();
-    DS3231M_SetDate();
-     flg_RTC_settime = FALSE;
+     DS3231M_SetDate();
+     FLAG_rtc_settime = FALSE;
    }
-   if(flg_DELAY_1s)
+   if(CYCLIC_1s)
    {
-    temperature = DS18B20_read_16();
+    //FLAG_ds18b20_err = DS18B20_All_Read_Temp(&temperature);
+    DS18B20_Read_Temp(&temperature, ROM_ID1);
     DS3231M_GetTime();
     DS3231M_GetDate();
     DS3231M_GetTemperature();
-	  if(temperature >= 0)
+    if(temperature >= 0)
     {
-	    flg_TEMP_neg = 0;
-	  }
-	  else 
-	  {
-	    temperature = -(temperature);
-	    flg_TEMP_neg = TRUE;
-	  }
-	  temperature >>= 4;
+      FLAG_temp_neg = 0;
+    }
+    else 
+    {
+      temperature = -(temperature);
+      FLAG_temp_neg = TRUE;
+    }
+    temperature >>= 4;
     soundspeedkfactorcorrection = soundspeedkfactor * temperature;
-    soundspeedkfactorcorrection /= 100;  /* convert from km/s to dm/s for compatibility with soundspeed0degC */
+    soundspeedkfactorcorrection /= 100;          /* convert from km/s to dm/s for compatibility with soundspeed0degC */
     soundspeed = soundspeed0degC + soundspeedkfactorcorrection;
-	  DS18B20_convert();     /* issue DS18B20 convert command, to read the results after 1s */
-    flg_DELAY_1s = FALSE;
-    flg_TEMP_read = TRUE;	
+    FLAG_ds18b20_err = DS18B20_All_convert();    /* issue DS18B20 convert command, to read the results after 1s */
+    CYCLIC_1s = FALSE;
+    FLAG_temp_read = TRUE;	
    }
-   if(flg_DELAY_100ms && flg_TEMP_read)
+   if(CYCLIC_100ms && FLAG_temp_read)
    {
      SONAR_TRIG_ON;
      DELAY_US(DELAY_15US);
      SONAR_TRIG_OFF;
-     flg_DELAY_100ms = FALSE;
+     CYCLIC_100ms = FALSE;
    }
-   if(CAPTURE_new_mes)
+   if(EVENT_cap_new_mes)
    {
-     if(flg_TEMP_read)
+     if(FLAG_temp_read)
      {
        /* distance[um] = 331.3[m/s] * delta_t[us] */
        distance = (s32)((u32)soundspeed * (u32)CAPTURE_delta);
@@ -162,12 +168,12 @@ void main(void)
        else
        {
          idx_rec_dist = 0;
-         flg_DIST_samples_read = TRUE;
+         FLAG_dist_samp_read = TRUE;
        }
-	   CAPTURE_new_mes = FALSE;
+       EVENT_cap_new_mes = FALSE;
      }
    }
-   if(flg_DIST_samples_read)
+   if(FLAG_dist_samp_read)
    {
     u32 l_sum_dist = 0;
     u8 l_dist_samples = 0;
@@ -215,27 +221,27 @@ void main(void)
     if(l_sum_dist == 0)   /* no group had minimum size of FREQ_THRS */
     {    
       
-      flg_DIST_valid_calc = FALSE;
+      FLAG_dist_valid_calc = FALSE;
     }
     else  /* at least one group with minimum size of FREQ_THRS was found */
     {
       DISTANCE_NEW = Med_Calib_Round(l_sum_dist, l_dist_samples);
-      flg_DIST_valid_calc = TRUE;
+      FLAG_dist_valid_calc = TRUE;
     }
-    flg_DIST_samples_read = FALSE;
+    FLAG_dist_samp_read = FALSE;
    }
-   if(CAPTURE_ovf_err)
+   if(ERROR_cap_ovf)
    {
      
    }
-   if(CAPTURE_no_trig_err)
+   if(ERROR_cap_no_trig)
    {
     
    }
-   if(flg_DIST_valid_calc)    /* new validated distance measurement arrived */
+   if(FLAG_dist_valid_calc)    /* new validated distance measurement arrived */
    {
      LevelReadingAlgo();      /* Level Reading Algorithm */
-     flg_DIST_valid_calc = FALSE;
+     FLAG_dist_valid_calc = FALSE;
    }
   }
 }
@@ -288,7 +294,7 @@ void LevelReadingAlgo()
         /* Calculate reference again */
         algo_ref_samples_idx = 0; 
         //dist_plausi = 0;
-        //flg_DIST_valid_calc = FALSE;
+        //FLAG_dist_valid_calc = FALSE;
       }
       else
       {
@@ -361,18 +367,18 @@ u16 Med_Calib_Round(u32 sum_dist, u8 dist_samples)
   if(dist_plausi <= 4240)   /* if real measured distance <= 400cm */
   {
     u16 temp_dist_plausi_calib;
-    dist_plausi_calib = dist_plausi;       /* 1595 */
-    dist_plausi_calib /= 10;               /* 159 */
-    if((dist_plausi % 10) >= 5)            /* rounding */
+    dist_plausi_calib = dist_plausi;            /* 1595 */
+    dist_plausi_calib /= 10;                    /* 159 */
+    if((dist_plausi % 10) >= 5)                 /* rounding */
     {
-    dist_plausi_calib++;                  /* 160 */
+    dist_plausi_calib++;                        /* 160 */
     }
-    dist_plausi_calib *= 106;              /* 16960 */
+    dist_plausi_calib *= sensor_calib_value;    /* 16960 */
     temp_dist_plausi_calib = dist_plausi_calib;
-    dist_plausi_calib /= 100;              /* 169 */
-    if((temp_dist_plausi_calib % 100) >= 50)  /* rounding */
+    dist_plausi_calib /= 100;                   /* 169 */
+    if((temp_dist_plausi_calib % 100) >= 50)    /* rounding */
     {
-      dist_plausi_calib++;                 /* 170 */
+      dist_plausi_calib++;                      /* 170 */
     }
     SendDIST_UART(dist_plausi_calib);
     //DisplayDIST(dist_plausi_calib);

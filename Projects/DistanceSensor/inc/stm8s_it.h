@@ -27,17 +27,14 @@
 #include "stm8s.h"
 
 /* Exported types ------------------------------------------------------------*/
-extern u8 flg_DELAY_100ms;
-extern u8 delay_50ms_flag;
-extern u8 flg_DELAY_1s;
-extern u8 CAPTURE_new_mes;
-extern u16 CAPTURE_delta;
-extern u8 CAPTURE_no_trig_err;
-extern u8 CAPTURE_ovf_err;
-extern u8 CAPTURE_sensor_not_responding_err;
+/* Exported variables */
+extern volatile _Bool EVENT_cap_new_mes;
+extern volatile _Bool ERROR_cap_no_trig;
+extern volatile _Bool ERROR_cap_ovf;
+extern volatile _Bool ERROR_cap_sens_not_resp;
+extern volatile u16 CAPTURE_delta;
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-#define CAPTURE_INVALID_MES 65536
 /* Exported functions ------------------------------------------------------- */
 #ifdef _COSMIC_
 void _stext(void); /* RESET startup routine */
