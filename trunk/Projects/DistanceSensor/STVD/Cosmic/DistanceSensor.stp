@@ -218,7 +218,7 @@ String.6.0=2011,11,23,14,32,47
 [Root.Source Files]
 ElemType=Folder
 PathName=Source Files
-Child=Root.Source Files...\..\src\onewire.c
+Child=Root.Source Files...\..\src\sst25vf016b75.c
 Next=Root.Include Files
 Config.0=Root.Source Files.Config.0
 Config.1=Root.Source Files.Config.1
@@ -288,6 +288,11 @@ String.3.0=
 String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
+
+[Root.Source Files...\..\src\sst25vf016b75.c]
+ElemType=File
+PathName=..\..\src\sst25vf016b75.c
+Next=Root.Source Files...\..\src\onewire.c
 
 [Root.Source Files...\..\src\onewire.c]
 ElemType=File
@@ -391,7 +396,7 @@ PathName=..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_gpio.c
 [Root.Include Files]
 ElemType=Folder
 PathName=Include Files
-Child=Root.Include Files...\..\inc\onewire.h
+Child=Root.Include Files...\..\inc\sst25vf016b75.h
 Config.0=Root.Include Files.Config.0
 Config.1=Root.Include Files.Config.1
 
@@ -460,6 +465,11 @@ String.3.0=
 String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
+
+[Root.Include Files...\..\inc\sst25vf016b75.h]
+ElemType=File
+PathName=..\..\inc\sst25vf016b75.h
+Next=Root.Include Files...\..\inc\onewire.h
 
 [Root.Include Files...\..\inc\onewire.h]
 ElemType=File
