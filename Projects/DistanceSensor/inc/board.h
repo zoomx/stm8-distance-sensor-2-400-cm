@@ -80,6 +80,8 @@ PC5: Port C5 / SPI clock
 PC6: Port C6 / SPI MOSI
 PC7: Port C7 / SPI MISO
 */
+#define SPI_CS_HIGH  (GPIOE->ODR |= GPIO_PIN_5)
+#define SPI_CS_LOW   (GPIOE->ODR &= ~GPIO_PIN_5)
 
 /* Hardware USART
 PD5: Port D5 / UART1 data transmit

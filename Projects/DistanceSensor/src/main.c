@@ -31,6 +31,7 @@
 #include "ds18b20.h"
 #include "7seg.h"
 #include "ds3231m_rtc.h"
+#include "SST25VF016B75.h"
 
 void DisplayDIST(u16);
 void SendDIST_UART(u16);
@@ -75,7 +76,7 @@ u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi_calib = 0;
 u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
-
+u8 buff[3];
 u8 ROM_ID2[8];
 /* FLAGS */
 volatile _Bool FLAG_temp_neg = FALSE;
@@ -103,6 +104,7 @@ void main(void)
   //SevenSegRefresh();
   DELAY_US(1000);
   DS18B20_All_init();
+  SST25VF016_Init();
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
@@ -125,33 +127,42 @@ void main(void)
    }
    if(CYCLIC_1s)
    {
+    u16 temp_frac, temp_intreg, tmp;
     //FLAG_ds18b20_err = DS18B20_All_Read_Temp(&temperature);
     DS18B20_Read_Temp(&temperature, ROM_ID1);
     DS3231M_GetTime();
     DS3231M_GetDate();
     DS3231M_GetTemperature();
-    if(temperature >= 0)
-    {
-      FLAG_temp_neg = 0;
-    }
-    else 
+    //SST25VF016_Read_ID(buff);
+    SST25VF016_Read_JEDEC_ID(buff);
+    if(temperature < 0)
     {
       temperature = -(temperature);
       FLAG_temp_neg = TRUE;
     }
-    temperature >>= 4;
-    soundspeedkfactorcorrection = soundspeedkfactor * temperature;
-    soundspeedkfactorcorrection /= 100;          /* convert from km/s to dm/s for compatibility with soundspeed0degC */
-    soundspeed = soundspeed0degC + soundspeedkfactorcorrection;
+    else 
+    {
+      FLAG_temp_neg = FALSE;
+    }
+    temp_intreg = temperature>>4;
+    temp_frac = temperature - (temp_intreg<<4);
+    temp_frac *= 625;
+    tmp = temp_frac % 1000;
+    temp_frac /= 1000;
+    if(tmp >= 500) temp_frac++;
+    SevenSegOut(A[(temp_intreg)%10] | B[temp_frac] | SymbComma);
+    SevenSegOut(0 | B[(temp_intreg)/10]);
+    SevenSegRefresh();
+    
     FLAG_ds18b20_err = DS18B20_All_convert();    /* issue DS18B20 convert command, to read the results after 1s */
     CYCLIC_1s = FALSE;
     FLAG_temp_read = TRUE;	
    }
    if(CYCLIC_100ms && FLAG_temp_read)
    {
-     SONAR_TRIG_ON;
-     DELAY_US(DELAY_15US);
-     SONAR_TRIG_OFF;
+     //SONAR_TRIG_ON;
+     //DELAY_US(DELAY_15US);
+     //SONAR_TRIG_OFF;
      CYCLIC_100ms = FALSE;
    }
    if(EVENT_cap_new_mes)

@@ -28,13 +28,13 @@ Using ST Standard Peripheral Driver Library
  {
    SPI_DeInit();
    SPI_Init(SPI_FIRSTBIT_MSB, 
-            SPI_BAUDRATEPRESCALER_32, 
+            SPI_BAUDRATEPRESCALER_128, 
             SPI_MODE_MASTER, 
-            SPI_CLOCKPOLARITY_HIGH, 
-            SPI_CLOCKPHASE_2EDGE, 
+            SPI_CLOCKPOLARITY_LOW, 
+            SPI_CLOCKPHASE_1EDGE, 
             SPI_DATADIRECTION_2LINES_FULLDUPLEX, 
-            SPI_NSS_HARD, 0x00);
-   SPI_Cmd(ENABLE);
+            SPI_NSS_SOFT, 0x07);
+  SPI_Cmd(ENABLE);
  }
  
  /*
@@ -234,10 +234,28 @@ issued after executing the JEDEC Read-ID instruction, issue a 00H (NOP) command 
  */
  void SST25VF016_Read_JEDEC_ID(u8* buffer)
  {
+   SPI_CS_LOW;
+   DELAY_US(DELAY_60US);
    SPI_SendData(RD_JEDEC_ID);
+   while(!(SPI->SR & SPI_SR_TXE));
+
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
    buffer[0] = SPI_ReceiveData();
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
    buffer[1] = SPI_ReceiveData();
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
    buffer[2] = SPI_ReceiveData();
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
+   DELAY_US(DELAY_60US);
+   SPI_CS_HIGH;
  }
  
  /*
@@ -249,10 +267,25 @@ by a low to high transition on CE#.
  */
  void SST25VF016_Read_ID(u8* buffer)
  {
+   SPI_CS_LOW;
+   DELAY_US(DELAY_6US);
    SPI_SendData(RD_ID);
+   while(!(SPI->SR & SPI_SR_TXE));
    SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
    SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
    SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));  
+
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
    buffer[0] = SPI_ReceiveData();
+   SPI_SendData(0x00);
+   while(!(SPI->SR & SPI_SR_TXE));
+   while(!(SPI->SR & SPI_SR_RXNE));
    buffer[1] = SPI_ReceiveData();
+   DELAY_US(DELAY_6US);
+   SPI_CS_HIGH;
  }
