@@ -4,6 +4,7 @@
 void SST25VF016_Init(void);
 void SST25VF016_Read(u32, u8*, u16);
 void SST25VF016_Read_HS(u32, u8*, u16);
+void SST25VF016_Read_Status_Register(u8*);
 void SST25VF016_Program_Byte(u32, u8);
 void SST25VF016_Enable_SY(void);
 void SST25VF016_Disable_SY(void);

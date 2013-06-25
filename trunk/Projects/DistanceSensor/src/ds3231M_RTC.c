@@ -53,7 +53,7 @@ u8 DS3231M_GetDate(void)
     RTC_day = tmp[0];
     RTC_date = tmp[1];
     RTC_month = tmp[2];
-	RTC_year = tmp[3];
+	  RTC_year = tmp[3];
   }
   return status; 
 }
