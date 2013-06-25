@@ -76,8 +76,13 @@ u8 freq_rec_dist[DIST_SAMP];
 u8 idx_rec_dist = 0;
 u16 dist_plausi_calib = 0;
 u16 DISTANCE_NEW = 0, DISTANCE_OLD = 0;
-u8 buff[3];
+u8 buff[16];
+u8 flash_stat;
 u8 ROM_ID2[8];
+u16 CYCLYC_1S_cnt = 0;
+u32 SPIFlash_pointer = (u32)0x0;
+#define SPIFlash_ptr_loc     (u32)0x0
+#define SPIFlash_MAX_ADDRESS (u32)0x1FFFFF
 /* FLAGS */
 volatile _Bool FLAG_temp_neg = FALSE;
 volatile _Bool FLAG_temp_read = FALSE;
@@ -85,6 +90,8 @@ volatile _Bool FLAG_dist_samp_read = FALSE;
 volatile _Bool FLAG_dist_valid_calc = FALSE;
 volatile _Bool FLAG_rtc_settime = FALSE;
 volatile _Bool FLAG_ds18b20_err = FALSE;
+volatile _Bool FLAG_spiflash_access = FALSE;
+volatile _Bool FLAG_spiflash_write = FALSE;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -105,6 +112,11 @@ void main(void)
   DELAY_US(1000);
   DS18B20_All_init();
   SST25VF016_Init();
+  //SST25VF016_Read(SPIFlash_ptr_loc, buff, 3);
+  //SPIFlash_pointer = (u32)(buff[0] << 16);
+  //SPIFlash_pointer |= (u32)(buff[1] << 8);
+ // SPIFlash_pointer |= (u32)(buff[2]);
+  SST25VF016_Write_Status_Register(0x00); //Unlock SPI flash memory for writing
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
@@ -132,9 +144,17 @@ void main(void)
     DS18B20_Read_Temp(&temperature, ROM_ID1);
     DS3231M_GetTime();
     DS3231M_GetDate();
-    DS3231M_GetTemperature();
-    //SST25VF016_Read_ID(buff);
-    SST25VF016_Read_JEDEC_ID(buff);
+    //DS3231M_GetTemperature();
+    
+    if(FLAG_spiflash_access)
+    {
+      //SST25VF016_Read_ID(buff);
+      SST25VF016_Read_JEDEC_ID(buff);
+      SST25VF016_Read_Status_Register(&flash_stat);
+      //SST25VF016_Program_Byte(0x100005, 0x73);
+      SST25VF016_Read(SPIFlash_pointer, buff, 16);
+      FLAG_spiflash_access = FALSE;
+    }
     if(temperature < 0)
     {
       temperature = -(temperature);
@@ -155,6 +175,16 @@ void main(void)
     SevenSegRefresh();
     
     FLAG_ds18b20_err = DS18B20_All_convert();    /* issue DS18B20 convert command, to read the results after 1s */
+    if(FLAG_spiflash_write && CYCLYC_1S_cnt >= 60)
+    {
+      CYCLYC_1S_cnt = 0;
+      if(temp_intreg > 35) FLAG_spiflash_write = FALSE; 
+      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)temp_intreg);
+      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_hour);
+      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_min);
+      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_sec);
+    }
+    if(CYCLYC_1S_cnt < 65534) CYCLYC_1S_cnt++;
     CYCLIC_1s = FALSE;
     FLAG_temp_read = TRUE;	
    }
