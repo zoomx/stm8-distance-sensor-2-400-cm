@@ -48,7 +48,7 @@ void delay_ms(u16 n_ms)
   TIM2->CNTRL = 2;
 
 /* clear update flag */
-  TIM2->SR1 &= ~0x01;
+  TIM2->SR1 &= (u8)(~0x01);
 
 /* Enable Counter */
   TIM2->CR1 |= 0x01;
@@ -56,11 +56,11 @@ void delay_ms(u16 n_ms)
   while(n_ms--)
   {
     while((TIM2->SR1 & 0x01) == 0) ;
-    TIM2->SR1 &= ~0x01;
+    TIM2->SR1 &= (u8)(~0x01);
   }
 
 /* Disable Counter */
-  TIM2->CR1 &= ~0x01;
+  TIM2->CR1 &= (u8)(~0x01);
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER2, DISABLE);
 }
 
@@ -77,7 +77,7 @@ void delay_10us(u8 n_10us)
   TIM2->CNTRL = 10;
 
   /* clear update flag */
-  TIM2->SR1 &= ~0x01;
+  TIM2->SR1 &= (u8)(~0x01);
 
   /* Enable Counter */
   TIM2->CR1 |= 0x01;

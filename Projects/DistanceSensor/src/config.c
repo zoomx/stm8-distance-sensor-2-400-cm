@@ -81,7 +81,7 @@ void Config()
   TIM1_DeInit();
   TIM1_TimeBaseInit(16, TIM1_COUNTERMODE_UP, 65535, 0x00);     /* 65.536ms overflow period */
   /* Trigger standard mode */
-  TIM1->CCER1 &= ~(0x20); /* Write CC2P = 0 in TIM1_CCER1 register to validate the polarity (and detect rising edges).*/
+  TIM1->CCER1 &= (u8)(~(0x20)); /* Write CC2P = 0 in TIM1_CCER1 register to validate the polarity (and detect rising edges).*/
   TIM1->SMCR |= 0x06;  /* Configure the timer in trigger mode by writing SMS = 110 */
   TIM1->SMCR |= 0x60;  /* TS = 110, 110: Filtered timer input 2 (TI2FP2) */
   TIM1->CCMR3 |= 0x01;  /* 01: CC3 channel is configured as input, IC3 is mapped on TI3FP3 */

@@ -267,7 +267,7 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   CAPTURE_status = 5;
   if(TIM1->SR1 & TIM1_IT_CC3)
   {    
-    TIM1->CR1 &= ~(0x01);      /* after measurement stop the timer, to be restarted by sonar rising edge */
+    TIM1->CR1 &= (u8)(~(0x01));      /* after measurement stop the timer, to be restarted by sonar rising edge */
     TIM1->CNTRH = 0x00;        /* reset timer */
     TIM1->CNTRL = 0x00; 
     sensor_alive_cnt = 0;      /* reset ultrasonic sensor alive watchdog */
