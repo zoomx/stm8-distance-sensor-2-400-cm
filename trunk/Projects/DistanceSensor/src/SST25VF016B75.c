@@ -25,17 +25,18 @@ Using ST SPI Standard Peripheral Driver Library
 
 #define MAX_ADDRESS   0x1FFFFF
  
-typedef union ExtFlashAdr
+typedef union
 {
-  struct adr8b
+  struct
   {
+    u8 Zero;
     u8 HighByte;
-	u8 MidByte;
-	u8 LowByte;
-	u8 Zero;
-  };
+	  u8 MidByte;
+	  u8 LowByte;
+  }adr8b;
   u32 adr32b;
-};
+}ExtFlashAdr;
+
 
 void SST25VF016_Init(void)
 {
@@ -57,7 +58,7 @@ reached. Once the highest memory address is reached, the address pointer will au
 data from address location 1FFFFFH has been read, the next output will be from address location 000000H. The Read instruction is initiated by executing an 8-bit command,
 03H, followed by address bits [A23-A0]. CE# must remain active low for the duration of the Read cycle.
  */
-void SST25VF016_Read(u32 addr, u8* buffer, u16 nr_bytes)
+void SST25VF016_Read(ExtFlashAdr addr, u8* buffer, u16 nr_bytes)
 {
   u16 i;
   u8 tmp;
@@ -67,15 +68,15 @@ void SST25VF016_Read(u32 addr, u8* buffer, u16 nr_bytes)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -90,6 +91,36 @@ void SST25VF016_Read(u32 addr, u8* buffer, u16 nr_bytes)
   SPI_CS_HIGH;
 }
  
+u8 SST25VF016_Read_Byte(ExtFlashAdr addr)
+{
+  u8 tmp;
+  SPI_CS_LOW;
+  DELAY_US(SPI_CS_LOW_DELAY);
+  SPI->DR = RD;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR =  addr.adr8b.HighByte;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR =  addr.adr8b.MidByte;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR =  addr.adr8b.LowByte;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   /* dummy byte */
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;     //Read byte
+  while(!(SPI->SR & SPI_SR_TXE));
+  while(SPI->SR & SPI_SR_BSY);
+  SPI_CS_HIGH;
+  return tmp;
+}
+ 
  /*
  The High-Speed-Read instruction supporting up to 80 MHz Read is initiated by executing an 8-bit command, 0BH, followed by address bits [A23-A0] and a dummy byte. CE#
 must remain active low for the duration of the High-Speed-Read cycle. See Figure 6 for the High-Speed-Read sequence. Following a dummy cycle, the High-Speed-Read instruction
@@ -98,7 +129,7 @@ CE#. The internal address pointer will automatically increment until the highest
 pointer will automatically increment to the beginning (wraparound) of the address space. Once the data from address location 1FFFFFH has been read, the next output will be
 from address location 000000H.
  */
-void SST25VF016_Read_HS(u32 addr, u8* buffer, u16 nr_bytes)
+void SST25VF016_Read_HS(ExtFlashAdr addr, u8* buffer, u16 nr_bytes)
 {
   u16 i;
   u8 tmp;
@@ -108,15 +139,15 @@ void SST25VF016_Read_HS(u32 addr, u8* buffer, u16 nr_bytes)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -138,7 +169,7 @@ instruction must be executed. CE# must remain active low for the duration of the
 02H, followed by address bits [A23-A0]. Following the address, the data is input in order from MSB (bit 7) to LSB (bit 0). CE# must be driven high before the instruction is
 executed. The user may poll the Busy bit in the software status register or wait TBP for the completion of the internal self-timed Byte-Program operation.
  */
-void SST25VF016_Program_Byte(u32 addr, u8 data)
+void SST25VF016_Program_Byte(ExtFlashAdr addr, u8 data)
 {
   u8 tmp;
   SPI_CS_LOW;
@@ -156,15 +187,15 @@ void SST25VF016_Program_Byte(u32 addr, u8 data)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -226,7 +257,7 @@ hardware method or the RDSR instruction and execute the Write-Disable (WRDI) ins
 device is ready for any command. See Figures 10 and 11 for AAI Word programming sequence. There is no wrap mode during AAI programming; once the
 highest unprotected memory address is reached, the device will exit AAI operation and reset the Write-Enable-Latch bit (WEL = 0) and the AAI bit (AAI=0).
  */
-void SST25VF016_AAI_Word_Program(u32 addr, u8* data, u16 nr_words)
+void SST25VF016_AAI_Word_Program(ExtFlashAdr addr, u8* data, u16 nr_words)
 {
   u16 i;
   u8 tmp;
@@ -245,15 +276,15 @@ void SST25VF016_AAI_Word_Program(u32 addr, u8* data, u16 nr_words)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -307,7 +338,7 @@ Significant address) are used to determine the sector address (SAX), remaining a
 CE# must be driven high before the instruction is executed. The user may poll the Busy bit in the software status register
 or wait TSE for the completion of the internal self-timed Sector-Erase cycle.
  */
-void SST25VF016_Sector_Erase_4KB(u32 addr)
+void SST25VF016_Sector_Erase_4KB(ExtFlashAdr addr)
 {
   u8 tmp;
   SPI_CS_LOW;
@@ -325,15 +356,15 @@ void SST25VF016_Sector_Erase_4KB(u32 addr)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -354,7 +385,7 @@ address bits [A23-A0]. Address bits [AMS-A15] are used to determine block addres
 be VIL or VIH. CE# must be driven high before the instruction is executed. The user may poll the Busy bit in the software
 status register or wait TBE for the completion of the internal self-timed 32-KByte Block-Erase or 64-KByte Block-Erase cycles.
  */
-void SST25VF016_Sector_Erase_32KB(u32 addr)
+void SST25VF016_Block_Erase_32KB(ExtFlashAdr addr)
 {
   u8 tmp;
   SPI_CS_LOW;
@@ -372,15 +403,15 @@ void SST25VF016_Sector_Erase_32KB(u32 addr)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
@@ -388,7 +419,7 @@ void SST25VF016_Sector_Erase_32KB(u32 addr)
   SPI_CS_HIGH;
 }
  
-void SST25VF016_Sector_Erase_64KB(u32 addr)
+void SST25VF016_Block_Erase_64KB(ExtFlashAdr addr)
 {
   u8 tmp;
   SPI_CS_LOW;
@@ -406,21 +437,21 @@ void SST25VF016_Sector_Erase_64KB(u32 addr)
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x00FF0000) >> 16);
+  SPI->DR = addr.adr8b.HighByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x0000FF00) >> 8);
+  SPI->DR = addr.adr8b.MidByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
-  SPI->DR =  (u8)((addr & 0x000000FF));
+  SPI->DR = addr.adr8b.LowByte;
   while(!(SPI->SR & SPI_SR_RXNE));
   tmp = SPI->DR;
   while(!(SPI->SR & SPI_SR_TXE));
   while(SPI->SR & SPI_SR_BSY);
   SPI_CS_HIGH;
- }
+}
  
  /*
  The Chip-Erase instruction clears all bits in the device to FFH. A Chip-Erase instruction will be ignored if any of the
@@ -494,7 +525,7 @@ When a Write operation is in progress, the Busy bit may be checked before sendin
 CE# must be driven low before the RDSR instruction is entered and remain low until the status data is read. Read-Status-Register is continuous with ongoing clock cycles
 until it is terminated by a low to high transition of the CE#.
 */
-void SST25VF016_Read_Status_Register(u8* status)
+u8 SST25VF016_Read_Status_Register()
 {
   u8 tmp;
   SPI_CS_LOW;
@@ -505,10 +536,11 @@ void SST25VF016_Read_Status_Register(u8* status)
   while(!(SPI->SR & SPI_SR_TXE));
   SPI->DR = DUMMY;   //dummy
   while(!(SPI->SR & SPI_SR_RXNE));
-  *status = SPI->DR;
+  tmp = SPI->DR;     //read status register
   while(!(SPI->SR & SPI_SR_TXE));
   while(SPI->SR & SPI_SR_BSY);
   SPI_CS_HIGH;
+  return tmp;
 }
 
  /*
@@ -518,30 +550,30 @@ BFH, identifies the manufacturer as SST. Byte 2, 25H, identifies the memory type
 sequence is shown in Figure 20. The JEDEC Read ID instruction is terminated by a low to high transition on CE# at any time during data output. If no other command is
 issued after executing the JEDEC Read-ID instruction, issue a 00H (NOP) command before going into Standby Mode (CE#=VIH).
  */
- void SST25VF016_Read_JEDEC_ID(u8* buffer)
- {
-   u8 tmp;
-   SPI_CS_LOW;
-   DELAY_US(SPI_CS_LOW_DELAY);
-   SPI->DR = RD_JEDEC_ID;
-   while(!(SPI->SR & SPI_SR_RXNE));
-   tmp = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = DUMMY;   //dummy
-   while(!(SPI->SR & SPI_SR_RXNE));
-   buffer[0] = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = DUMMY;   //dummy
-   while(!(SPI->SR & SPI_SR_RXNE));
-   buffer[1] = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = DUMMY;   //dummy
-   while(!(SPI->SR & SPI_SR_RXNE));
-   buffer[2] = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   while(SPI->SR & SPI_SR_BSY);
-   SPI_CS_HIGH;
- }
+void SST25VF016_Read_JEDEC_ID(u8* buffer)
+{
+  u8 tmp;
+  SPI_CS_LOW;
+  DELAY_US(SPI_CS_LOW_DELAY);
+  SPI->DR = RD_JEDEC_ID;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   //dummy
+  while(!(SPI->SR & SPI_SR_RXNE));
+  buffer[0] = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   //dummy
+  while(!(SPI->SR & SPI_SR_RXNE));
+  buffer[1] = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   //dummy
+  while(!(SPI->SR & SPI_SR_RXNE));
+  buffer[2] = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  while(SPI->SR & SPI_SR_BSY);
+  SPI_CS_HIGH;
+}
  
  /*
  The Read-ID instruction (RDID) identifies the devices as SST25VF016B and manufacturer as SST. This command is backward compatible to all SST25xFxxxA devices and
@@ -550,35 +582,35 @@ an 8-bit command, 90H or ABH, followed by address bits [A23-A0]. Following the R
 located in address 00001H. Once the device is in Read-ID mode, the manufacturer’s and device ID output data toggles between address 00000H and 00001H until terminated
 by a low to high transition on CE#.
  */
- void SST25VF016_Read_ID(u8* buffer)
- {
-   u8 tmp;
-   SPI_CS_LOW;
-   DELAY_US(SPI_CS_LOW_DELAY);
-   SPI->DR = RD_ID;
-   while(!(SPI->SR & SPI_SR_RXNE));
-   tmp = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = 0x00;    //address
-   while(!(SPI->SR & SPI_SR_RXNE));
-   tmp = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = 0x00;   //address
-   while(!(SPI->SR & SPI_SR_RXNE));
-   tmp = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = 0x00;   //address
-   while(!(SPI->SR & SPI_SR_RXNE)); 
-   tmp = SPI->DR; 
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = DUMMY;   //dummy
-   while(!(SPI->SR & SPI_SR_RXNE));
-   buffer[0] = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   SPI->DR = DUMMY;   //dummy
-   while(!(SPI->SR & SPI_SR_RXNE));
-   buffer[1] = SPI->DR;
-   while(!(SPI->SR & SPI_SR_TXE));
-   while(SPI->SR & SPI_SR_BSY);
-   SPI_CS_HIGH;
- }
+void SST25VF016_Read_ID(u8* buffer)
+{
+  u8 tmp;
+  SPI_CS_LOW;
+  DELAY_US(SPI_CS_LOW_DELAY);
+  SPI->DR = RD_ID;
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = 0x00;    //address
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = 0x00;   //address
+  while(!(SPI->SR & SPI_SR_RXNE));
+  tmp = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = 0x00;   //address
+  while(!(SPI->SR & SPI_SR_RXNE)); 
+  tmp = SPI->DR; 
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   //dummy
+  while(!(SPI->SR & SPI_SR_RXNE));
+  buffer[0] = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  SPI->DR = DUMMY;   //dummy
+  while(!(SPI->SR & SPI_SR_RXNE));
+  buffer[1] = SPI->DR;
+  while(!(SPI->SR & SPI_SR_TXE));
+  while(SPI->SR & SPI_SR_BSY);
+  SPI_CS_HIGH;
+}

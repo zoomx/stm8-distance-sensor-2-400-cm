@@ -218,7 +218,7 @@ String.6.0=2011,11,23,14,32,47
 [Root.Source Files]
 ElemType=Folder
 PathName=Source Files
-Child=Root.Source Files...\..\src\sst25vf016b75.c
+Child=Root.Source Files...\..\src\flashmngr.c
 Next=Root.Include Files
 Config.0=Root.Source Files.Config.0
 Config.1=Root.Source Files.Config.1
@@ -288,6 +288,11 @@ String.3.0=
 String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
+
+[Root.Source Files...\..\src\flashmngr.c]
+ElemType=File
+PathName=..\..\src\flashmngr.c
+Next=Root.Source Files...\..\src\sst25vf016b75.c
 
 [Root.Source Files...\..\src\sst25vf016b75.c]
 ElemType=File
@@ -396,7 +401,7 @@ PathName=..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_gpio.c
 [Root.Include Files]
 ElemType=Folder
 PathName=Include Files
-Child=Root.Include Files...\..\inc\sst25vf016b75.h
+Child=Root.Include Files...\..\inc\flashmngr.h
 Config.0=Root.Include Files.Config.0
 Config.1=Root.Include Files.Config.1
 
@@ -465,6 +470,11 @@ String.3.0=
 String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
+
+[Root.Include Files...\..\inc\flashmngr.h]
+ElemType=File
+PathName=..\..\inc\flashmngr.h
+Next=Root.Include Files...\..\inc\sst25vf016b75.h
 
 [Root.Include Files...\..\inc\sst25vf016b75.h]
 ElemType=File

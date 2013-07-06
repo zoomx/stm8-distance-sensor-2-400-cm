@@ -31,7 +31,7 @@
 #include "ds18b20.h"
 #include "7seg.h"
 #include "ds3231m_rtc.h"
-#include "SST25VF016B75.h"
+#include "flashmngr.h"
 
 void DisplayDIST(u16);
 void SendDIST_UART(u16);
@@ -92,6 +92,7 @@ volatile _Bool FLAG_rtc_settime = FALSE;
 volatile _Bool FLAG_ds18b20_err = FALSE;
 volatile _Bool FLAG_spiflash_access = FALSE;
 volatile _Bool FLAG_spiflash_write = FALSE;
+volatile _Bool FLAG_ExtFlashinit_OK = FALSE;
 /* Public functions ----------------------------------------------------------*/
 /**
   ******************************************************************************
@@ -111,11 +112,10 @@ void main(void)
   //SevenSegRefresh();
   DELAY_US(1000);
   DS18B20_All_init();
-  SST25VF016_Init();
-  //SST25VF016_Write_Status_Register(0x00); //Unlock SPI flash memory for writing
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
+  FLAG_ExtFlashinit_OK = FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
   for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
