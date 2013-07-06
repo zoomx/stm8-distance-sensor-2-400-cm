@@ -1,5 +1,5 @@
 /*
-Using ST Standard Peripheral Driver Library
+Using ST SPI Standard Peripheral Driver Library
 */ 
 #include "board.h"
 #include "delay.h"
@@ -25,6 +25,18 @@ Using ST Standard Peripheral Driver Library
 
 #define MAX_ADDRESS   0x1FFFFF
  
+typedef union ExtFlashAdr
+{
+  struct adr8b
+  {
+    u8 HighByte;
+	u8 MidByte;
+	u8 LowByte;
+	u8 Zero;
+  };
+  u32 adr32b;
+};
+
 void SST25VF016_Init(void)
 {
   SPI_DeInit();

@@ -2,9 +2,9 @@
 #include "delay.h"
 
 #define SDA_HIGH  (SOFTI2C_PORT->ODR |= SOFTI2C_SDA_PIN)
-#define SDA_LOW   (SOFTI2C_PORT->ODR &= ~SOFTI2C_SDA_PIN)
+#define SDA_LOW   (SOFTI2C_PORT->ODR &= (u8)(~SOFTI2C_SDA_PIN))
 #define SCL_HIGH  (SOFTI2C_PORT->ODR |= SOFTI2C_SCL_PIN)
-#define SCL_LOW   (SOFTI2C_PORT->ODR &= ~SOFTI2C_SCL_PIN)
+#define SCL_LOW   (SOFTI2C_PORT->ODR &= (u8)(~SOFTI2C_SCL_PIN))
 #define SDA_READ  (SOFTI2C_PORT->IDR & SOFTI2C_SDA_PIN)
 #define SCL_READ  (SOFTI2C_PORT->IDR & SOFTI2C_SCL_PIN)
 
@@ -130,7 +130,7 @@ u8 I2C_ReadByte(u8* rcvdata, u8 bytes, u8 index)
     toggle_scl();//goes high
     if(SDA_READ)
 	{
-	  byte|= (1 << (7- bit));
+	  byte |= (u8)((1 << (7- bit)));
 	}
     DELAY_US(I2C_DELAY);
     toggle_scl();//goes low
@@ -176,7 +176,7 @@ u8 I2C_WriteBytes(u8* indata, u8 bytes, u8 slave_adr, u8 slave_reg)
 	{
 		return 0;
 	}
-	if(!I2C_WriteByte(slave_adr | WRITE))
+	if(!I2C_WriteByte((u8)(slave_adr | WRITE)))
 	{
 		return 0;	
 	}
@@ -213,7 +213,7 @@ u8 I2C_ReadBytes(u8* data, u8 bytes, u8 slave_adr, u8 slave_reg)
   {
     return 0;
   }
-  if(!I2C_WriteByte(slave_adr | WRITE))
+  if(!I2C_WriteByte((u8)(slave_adr | WRITE)))
   {
     return 0;	
   }
@@ -228,7 +228,7 @@ u8 I2C_ReadBytes(u8* data, u8 bytes, u8 slave_adr, u8 slave_reg)
   {
     return 0;
   }
-  if(!I2C_WriteByte(slave_adr | READ))
+  if(!I2C_WriteByte((u8)(slave_adr | READ)))
   {
     return 0;	
   }

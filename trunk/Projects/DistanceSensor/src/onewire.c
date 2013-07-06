@@ -11,7 +11,7 @@ u8 OW_reset(void)
   result = OW_READ();
   DELAY_US(DELAY_410US);   /* master - wait for 410us (J-410,410,N/A) */
   OW_HIGH();               /* master - release bus */
-  return !result;
+  return (u8)(result == (u8)0);
 }
 
 void OW_write_8(u8 data)

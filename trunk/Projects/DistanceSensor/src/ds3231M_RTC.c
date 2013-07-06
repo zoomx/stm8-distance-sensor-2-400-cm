@@ -65,7 +65,7 @@ u8 DS3231M_GetTemperature(void)
   if(status)
   {
 	RTC_temp =  (s16) ((u16)((tmp[0]&0x7F)<<2) | ((tmp[1]>>6)&0x03));
-	if(tmp[0] & 0x80) RTC_temp |= 0x8000;
+	if(tmp[0] & 0x80) RTC_temp = -RTC_temp;
   }
   return status;
 }
@@ -98,7 +98,7 @@ u8 DS3231M_EnableOsc(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0E);
   if(tmp[0] & nEOSC)   //if nEOSC bit is set, reset it
   {
-    tmp[0] &= ~nEOSC;
+    tmp[0] &= (u8)(~nEOSC);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0E);
   }
   return status;
@@ -134,7 +134,7 @@ u8 DS3231M_DisableBBSQW(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0E);
   if(tmp[0] & BBSQW)  //if BBSQW bit is set, reset it
   {
-    tmp[0] &= ~BBSQW;
+    tmp[0] &= (u8)(~BBSQW);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0E);
   }
   return status;
@@ -170,7 +170,7 @@ u8 DS3231M_ResetINTCN(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0E);
   if(tmp[0] & INTCN)  //if INTCN bit is set, reset it
   {
-    tmp[0] &= ~INTCN;
+    tmp[0] &= (u8)(~INTCN);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0E);
   }
   return status;
@@ -194,7 +194,7 @@ u8 DS3231M_DisableAlarm1Intr(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0E);
   if(tmp[0] & A1IE)  //if A1IE bit is set, reset it
   {
-    tmp[0] &= ~A1IE;
+    tmp[0] &= (u8)(~A1IE);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0E);
   }
   return status;
@@ -218,7 +218,7 @@ u8 DS3231M_DisableAlarm2Intr(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0E);
   if(tmp[0] & A2IE)  //if A2IE bit is set, reset it
   {
-    tmp[0] &= ~A2IE;
+    tmp[0] &= (u8)(~A2IE);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0E);
   }
   return status;
@@ -240,7 +240,7 @@ u8 DS3231M_ResetOscStopFlag(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0F);
   if(tmp[0] & A2IE)  //if A2IE bit is set, reset it
   {
-    tmp[0] &= ~A2IE;
+    tmp[0] &= (u8)(~A2IE);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0F);
   }
   return status;
@@ -264,7 +264,7 @@ u8 DS3231M_Disable32KHzOut(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0F);
   if(tmp[0] & EN32KHZ)  //if EN32KHZ bit is set, reset it
   {
-    tmp[0] &= ~EN32KHZ;
+    tmp[0] &= (u8)(~EN32KHZ);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0F);
   }
   return status;
@@ -276,7 +276,7 @@ u8 DS3231M_ResetAlarm1(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0F);
   if(tmp[0] & A1F)  //if A1F bit is set, reset it
   {
-    tmp[0] &= ~A1F;
+    tmp[0] &= (u8)(~A1F);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0F);
   }
   return status;
@@ -288,7 +288,7 @@ u8 DS3231M_ResetAlarm2(void)
   status = I2C_ReadBytes(tmp, 1, DS3231M_ADR, 0x0F);
   if(tmp[0] & A2F)  //if A2F bit is set, reset it
   {
-    tmp[0] &= ~A2F;
+    tmp[0] &= (u8)(~A2F);
     status = I2C_WriteBytes(tmp, 1, DS3231M_ADR, 0x0F);
   }
   return status;

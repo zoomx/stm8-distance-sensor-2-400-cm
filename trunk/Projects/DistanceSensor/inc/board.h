@@ -9,9 +9,9 @@ PB6: Port B6
 #define ONEWIREBUS_PORT   GPIOB
 #define ONEWIREBUS_PIN    GPIO_PIN_6
 
-#define OW_LOW()  (ONEWIREBUS_PORT->ODR &= ~ONEWIREBUS_PIN)   /* drive 1-wire bus low */
+#define OW_LOW()  (ONEWIREBUS_PORT->ODR &= (u8)(~ONEWIREBUS_PIN))   /* drive 1-wire bus low */
 #define OW_HIGH() (ONEWIREBUS_PORT->ODR |= ONEWIREBUS_PIN)    /* release 1-wire bus */
-#define OW_READ() (ONEWIREBUS_PORT->IDR & ONEWIREBUS_PIN)     /* read 1-wire bus */
+#define OW_READ() (u8)(ONEWIREBUS_PORT->IDR & ONEWIREBUS_PIN)     /* read 1-wire bus */
 
 /* Board LED
 PD0: Port D0 / Timer 1 - break input / Configurable clock output [AFR5]
@@ -20,7 +20,7 @@ PD0: Port D0 / Timer 1 - break input / Configurable clock output [AFR5]
 #define LED_PIN   GPIO_PIN_0
 
 #define LED_ON    (LED_PORT->ODR |= LED_PIN)
-#define LED_OFF   (LED_PORT->ODR &= ~LED_PIN)
+#define LED_OFF   (LED_PORT->ODR &= (u8)(~LED_PIN))
 #define LED_STATE (LED_PORT->IDR & LED_PIN)
 
 /* Hardware test pin 
@@ -30,7 +30,7 @@ PF4: Port F4
 #define DEBUG_PIN_PIN   GPIO_PIN_4
 
 #define DEBUG_PIN_ON    (DEBUG_PIN_PORT->ODR |= DEBUG_PIN_PIN)
-#define DEBUG_PIN_OFF   (DEBUG_PIN_PORT->ODR &= ~DEBUG_PIN_PIN)
+#define DEBUG_PIN_OFF   (DEBUG_PIN_PORT->ODR &= (u8)(~DEBUG_PIN_PIN))
 #define DEBUG_PIN_STATE (DEBUG_PIN_PORT->IDR & DEBUG_PIN_PIN)
 
 /* Sonar trigger pin 
@@ -46,7 +46,7 @@ PC3: Port C3 / Timer 1 - channel 3
 #define SONAR_TMR_CAP_PORT  GPIOC
 #define SONAR_TMR_CAP_PIN   GPIO_PIN_3
 #define SONAR_TRIG_ON    (SONAR_TRIG_PORT->ODR |= SONAR_TRIG_PIN)
-#define SONAR_TRIG_OFF   (SONAR_TRIG_PORT->ODR &= ~SONAR_TRIG_PIN)
+#define SONAR_TRIG_OFF   (SONAR_TRIG_PORT->ODR &= (u8)(~SONAR_TRIG_PIN))
 #define SONAR_TRIG_STATE (SONAR_TRIG_PORT->IDR & SONAR_TRIG_PIN)
 
 /* Software SPI CONFIG
@@ -81,7 +81,7 @@ PC6: Port C6 / SPI MOSI
 PC7: Port C7 / SPI MISO
 */
 #define SPI_CS_HIGH  (GPIOC->ODR |= GPIO_PIN_4)
-#define SPI_CS_LOW   (GPIOC->ODR &= ~GPIO_PIN_4)
+#define SPI_CS_LOW   (GPIOC->ODR &= (u8)(~GPIO_PIN_4))
 
 /* Hardware USART
 PD5: Port D5 / UART1 data transmit
@@ -104,13 +104,13 @@ PD7: Port D7 / Top level interrupt / Timer 1 -channel 4 [AFR6]
 #define DISP_CLK_PIN  GPIO_PIN_7
 
 #define DISP_SDI_1   (DISP_PORT->ODR |= DISP_SDI_PIN)
-#define DISP_SDI_0   (DISP_PORT->ODR &= ~DISP_SDI_PIN)
+#define DISP_SDI_0   (DISP_PORT->ODR &= (u8)(~DISP_SDI_PIN))
 #define DISP_nOE_1   (DISP_PORT->ODR |= DISP_nOE_PIN)
-#define DISP_nOE_0   (DISP_PORT->ODR &= ~DISP_nOE_PIN)
+#define DISP_nOE_0   (DISP_PORT->ODR &= (u8)(~DISP_nOE_PIN))
 #define DISP_LE_1    (DISP_PORT->ODR |= DISP_LE_PIN)
-#define DISP_LE_0   (DISP_PORT->ODR &= ~DISP_LE_PIN)
+#define DISP_LE_0   (DISP_PORT->ODR &= (u8)(~DISP_LE_PIN))
 #define DISP_CLK_1   (DISP_PORT->ODR |= DISP_CLK_PIN)
-#define DISP_CLK_0   (DISP_PORT->ODR &= ~DISP_CLK_PIN)
+#define DISP_CLK_0   (DISP_PORT->ODR &= (u8)(~DISP_CLK_PIN))
 #define DISP_nOE_STATE (DISP_PORT->IDR & DISP_nOE_PIN)
 
 #endif

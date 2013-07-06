@@ -112,11 +112,7 @@ void main(void)
   DELAY_US(1000);
   DS18B20_All_init();
   SST25VF016_Init();
-  //SST25VF016_Read(SPIFlash_ptr_loc, buff, 3);
-  //SPIFlash_pointer = (u32)(buff[0] << 16);
-  //SPIFlash_pointer |= (u32)(buff[1] << 8);
- // SPIFlash_pointer |= (u32)(buff[2]);
-  SST25VF016_Write_Status_Register(0x00); //Unlock SPI flash memory for writing
+  //SST25VF016_Write_Status_Register(0x00); //Unlock SPI flash memory for writing
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
@@ -149,10 +145,10 @@ void main(void)
     if(FLAG_spiflash_access)
     {
       //SST25VF016_Read_ID(buff);
-      SST25VF016_Read_JEDEC_ID(buff);
-      SST25VF016_Read_Status_Register(&flash_stat);
+      //SST25VF016_Read_JEDEC_ID(buff);
+      //SST25VF016_Read_Status_Register(&flash_stat);
       //SST25VF016_Program_Byte(0x100005, 0x73);
-      SST25VF016_Read(SPIFlash_pointer, buff, 16);
+      //SST25VF016_Read(SPIFlash_pointer, buff, 16);
       FLAG_spiflash_access = FALSE;
     }
     if(temperature < 0)
@@ -179,10 +175,10 @@ void main(void)
     {
       CYCLYC_1S_cnt = 0;
       if(temp_intreg > 35) FLAG_spiflash_write = FALSE; 
-      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)temp_intreg);
-      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_hour);
-      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_min);
-      SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_sec);
+      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)temp_intreg);
+      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_hour);
+      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_min);
+      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_sec);
     }
     if(CYCLYC_1S_cnt < 65534) CYCLYC_1S_cnt++;
     CYCLIC_1s = FALSE;
