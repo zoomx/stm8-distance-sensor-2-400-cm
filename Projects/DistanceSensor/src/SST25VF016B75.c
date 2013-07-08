@@ -22,8 +22,6 @@ Using ST SPI Standard Peripheral Driver Library
 #define EN_SY             (u8)0x70    /* Enable SO to output RY/BY# status during AAI programming */
 #define DIS_SY            (u8)0x80    /* Disable SO to output RY/BY# status during AAI programming */
 #define DUMMY             (u8)0xFF  
-
-#define MAX_ADDRESS   0x1FFFFF
  
 typedef union
 {
@@ -31,8 +29,8 @@ typedef union
   {
     u8 Zero;
     u8 HighByte;
-	  u8 MidByte;
-	  u8 LowByte;
+    u8 MidByte;
+    u8 LowByte;
   }adr8b;
   u32 adr32b;
 }ExtFlashAdr;

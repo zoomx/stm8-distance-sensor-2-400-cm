@@ -1,12 +1,15 @@
 #ifndef _SST25VF016B75_H_
 #define _SST25VF016B75_H_
 
+/*
+TODO: check the order of bits if correct
+*/
 #define STATUS_BUSY  (u8)0x01
 #define STATUS_WEL   (u8)0x02
 #define STATUS_BP0   (u8)0x04
 #define STATUS_BP1   (u8)0x08
 #define STATUS_BP2   (u8)0x10
-#define STATUS_BP3   (u8)0x20
+#define STATUS_BP3   (u8)0x20  //value is "don't care"
 #define STATUS_AAI   (u8)0x40
 #define STATUS_BPL   (u8)0x80
 
@@ -16,8 +19,8 @@ typedef union
   {
     u8 Zero;
     u8 HighByte;
-	  u8 MidByte;
-	  u8 LowByte;
+    u8 MidByte;
+    u8 LowByte;
   }adr8b;
   u32 adr32b;
 }ExtFlashAdr;
