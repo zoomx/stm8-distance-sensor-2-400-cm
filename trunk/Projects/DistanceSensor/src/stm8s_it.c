@@ -47,6 +47,10 @@ volatile _Bool EVENT_cap_new_mes = FALSE;
 volatile _Bool ERROR_cap_ovf = FALSE;
 volatile _Bool ERROR_cap_no_trig = FALSE;
 volatile _Bool ERROR_cap_sens_not_resp = FALSE;
+
+volatile _Bool FLAG_IT_SET_DATE_TIME = FALSE;
+volatile _Bool FLAG_IT_GET_STORED_DATA = FALSE;
+volatile _Bool FLAG_IT_GET_PTR_SECTOR = FALSE;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
@@ -421,6 +425,23 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
      it is recommended to set a breakpoint on the following instruction.
   */
   u8 rx_data = UART1_ReceiveData8();
+  /*
+  RC commands:
+  0x11 - Set time and date
+  0x12 - Get PTR Sector
+  0x13 - Get Stored Data
+  */
+
+  switch(rx_data)
+  {
+    case 0x11: {FLAG_IT_SET_DATE_TIME = TRUE; break;}
+
+    case 0x12: {FLAG_IT_GET_PTR_SECTOR = TRUE; break;}
+
+    case 0x13: {FLAG_IT_GET_STORED_DATA = TRUE; break;}
+
+    default: {break;}
+  }
   UART1_ClearITPendingBit(UART1_IT_RXNE);
 }
 #endif /*STM8S208 or STM8S207 or STM8S103 or STM8S903 or STM8AF62Ax or STM8AF52Ax */

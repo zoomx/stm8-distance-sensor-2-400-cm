@@ -91,7 +91,7 @@ volatile _Bool FLAG_dist_valid_calc = FALSE;
 volatile _Bool FLAG_rtc_settime = FALSE;
 volatile _Bool FLAG_ds18b20_err = FALSE;
 volatile _Bool FLAG_spiflash_access = FALSE;
-volatile _Bool FLAG_spiflash_write = FALSE;
+volatile _Bool FLAG_spiflash_write = TRUE;
 volatile _Bool FLAG_ExtFlashinit_OK = FALSE;
 /* Public functions ----------------------------------------------------------*/
 /**
@@ -115,7 +115,7 @@ void main(void)
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegOut(SymbMinusA | SymbMinusB);
   SevenSegRefresh();
-  FLAG_ExtFlashinit_OK = FlashMngr_Init();
+  FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
   for(i = 0; i < ALGO_NR_REF_SAMPLES; i++)
@@ -129,7 +129,9 @@ void main(void)
   {
    if(FLAG_rtc_settime)
    {
-     //DS3231M_SetTime();
+     DS3231M_GetTime();
+     DS3231M_GetDate();
+     DS3231M_SetTime();
      DS3231M_SetDate();
      FLAG_rtc_settime = FALSE;
    }
@@ -144,11 +146,7 @@ void main(void)
     
     if(FLAG_spiflash_access)
     {
-      //SST25VF016_Read_ID(buff);
-      //SST25VF016_Read_JEDEC_ID(buff);
-      //SST25VF016_Read_Status_Register(&flash_stat);
-      //SST25VF016_Program_Byte(0x100005, 0x73);
-      //SST25VF016_Read(SPIFlash_pointer, buff, 16);
+      
       FLAG_spiflash_access = FALSE;
     }
     if(temperature < 0)
@@ -169,16 +167,23 @@ void main(void)
     SevenSegOut(A[(temp_intreg)%10] | B[temp_frac] | SymbComma);
     SevenSegOut(0 | B[(temp_intreg)/10]);
     SevenSegRefresh();
-    
     FLAG_ds18b20_err = DS18B20_All_convert();    /* issue DS18B20 convert command, to read the results after 1s */
+
+    if((FlashMngr_GetErrors() != 0) && ((CYCLYC_1S_cnt % 2) == 0))
+    {
+      SevenSegOut(SymbMinusA | SymbMinusB);
+      SevenSegOut(SymbMinusA | SymbMinusB);
+      SevenSegRefresh();
+    }
+
     if(FLAG_spiflash_write && CYCLYC_1S_cnt >= 60)
     {
       CYCLYC_1S_cnt = 0;
-      if(temp_intreg > 35) FLAG_spiflash_write = FALSE; 
-      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)temp_intreg);
-      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_hour);
-      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_min);
-      //SST25VF016_Program_Byte(SPIFlash_pointer++, (u8)RTC_sec);
+      buff[0] = (u8)temp_intreg;
+      buff[1] = (u8)RTC_hour;
+      buff[2] = (u8)RTC_min;
+      buff[3] = (u8)RTC_sec;
+      FlashMngr_StoreData(buff, 4);
     }
     if(CYCLYC_1S_cnt < 65534) CYCLYC_1S_cnt++;
     CYCLIC_1s = FALSE;
