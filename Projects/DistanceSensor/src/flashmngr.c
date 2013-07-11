@@ -74,6 +74,9 @@ _Bool FlashMngr_Init()
   u8 tmpstatus; 
   ExtFlashAdr tmpadr;
   SST25VF016_Init();
+  tmpstatus = SST25VF016_Read_Status_Register();
+  flash_ptr.adr32b = DATA_STORAGE_BASE;
+  pointer_adr.adr32b = PTR_ARR_BASE;
   tmp = FlashMngr_GetPointer();
   //Unlock SPI flash memory for writing
   SST25VF016_Write_Status_Register(FLASH_UNLOCK_VAL); 
@@ -83,8 +86,6 @@ _Bool FlashMngr_Init()
     EXTFLASH_ERR.Error_bits.Memory_Locked_ERR = 1;
     return FALSE;
   }
-  flash_ptr.adr32b = DATA_STORAGE_BASE;
-  pointer_adr.adr32b = PTR_ARR_BASE;
   return tmp;
 }
 
@@ -109,6 +110,7 @@ _Bool FlashMngr_GetPointer()
 {
   u32 ptr_old, ptr_new;
   u8 i;
+  s16 imin, imid, imax;
   ExtFlashAdr tmpadr;
   if(EXTFLASH_ERR.Error_bits.Inconsistent_ERR)
   {
@@ -140,37 +142,53 @@ _Bool FlashMngr_GetPointer()
     EXTFLASH_STAT.Status_bits.FlashPtr_was_Read = 1;
     return TRUE;
   }
-  tmpadr.adr32b = PTR_ARR_BASE + PTR_SIZE;
-  for(i = 1; i < PTR_ARR_LEN; i++)
+  //Binary Search of the last written address (which is < 0xFFFFFF (PTR_ERASED_VAL))
+  imin = 0;
+  imax = PTR_ARR_LEN - 1;
+  while(imax >= imin)
   {
+    imid = (imin + imax) / 2;
+    tmpadr.adr32b = PTR_ARR_BASE + ((imid) * PTR_SIZE);
     ptr_new = FlashMngr_ReadPointer(tmpadr);
-    if((ptr_new <= ptr_old) || INVALID_ADR(ptr_new)) 
+    if(ptr_new < PTR_ERASED_VAL) 
     {
+      imin = imid + 1;
+    }
+    else 
+    {
+      if(ptr_new == PTR_ERASED_VAL)
+      {
+        imax = imid - 1;
+      }
+    }
+  }
+  //imid is pointing to the first occurence of 0xFFFFFF or the element before it (if we reach this point, the element before is < 0xFFFFFF)
+  if(ptr_new == PTR_ERASED_VAL)
+  {
+    tmpadr.adr32b -= PTR_SIZE;                //position to the element before the erased value
+    ptr_new = FlashMngr_ReadPointer(tmpadr);  //read the flash pointer there
+    if(INVALID_ADR(ptr_new))
+    {
+      //if flash pointer address is invalid
       EXTFLASH_ERR.Error_bits.Invalid_FlashPtr_ERR = 1;
       EXTFLASH_ERR.Error_bits.Inconsistent_ERR = 1;
       return FALSE;
     }
-    if(ptr_new == PTR_ERASED_VAL)
-    {
-      pointer_adr = tmpadr;    //pointing to the next erased location, flash pointer array not full, at least one free location
-      flash_ptr.adr32b = ptr_old;
-      EXTFLASH_STAT.Status_bits.FlashPtr_was_Read = 1;
-      return TRUE;
-    }
-    tmpadr.adr32b += PTR_SIZE;
-    if((ptr_new > ptr_old) && (i == (PTR_ARR_LEN - 1)))
-    {
-      flash_ptr.adr32b = ptr_new;
-      EXTFLASH_STAT.Status_bits.PTR_ARR_Full = 1;
-      EXTFLASH_STAT.Status_bits.FlashPtr_was_Read = 1;
-      return TRUE;
-    }
-    ptr_old = ptr_new;
+    //if flash pointer address is valid
+    flash_ptr.adr32b = ptr_new;
+    pointer_adr.adr32b = tmpadr.adr32b + PTR_SIZE;
+    EXTFLASH_STAT.Status_bits.FlashPtr_was_Read = 1;
+    return TRUE;
   }
-  //this is not a normal function exit
-  EXTFLASH_ERR.Error_bits.Unknown_ERR = 1;
-  EXTFLASH_ERR.Error_bits.Inconsistent_ERR = 1;
-  return FALSE;
+  //if returned flash pointer is < 0xFFFFFF (PTR_ERASED_VAL)
+  flash_ptr.adr32b = ptr_new;
+  pointer_adr.adr32b = tmpadr.adr32b + PTR_SIZE;
+  EXTFLASH_STAT.Status_bits.FlashPtr_was_Read = 1;
+  if(imid == (PTR_ARR_LEN - 1))
+  {
+    EXTFLASH_STAT.Status_bits.PTR_ARR_Full = 1;
+  }
+  return TRUE;
 }
 
 _Bool FlashMngr_SavePointer(ExtFlashAdr adr)
@@ -290,11 +308,11 @@ _Bool FlashMngr_Erase_Chip()
   {
     EXTFLASH_STAT.Status_bits.Operation_refused = 0;
     SST25VF016_Chip_Erase();
-	  EXTFLASH_STAT.Status = 0;  //Reset status flags
+    EXTFLASH_STAT.Status = 0;  //Reset status flags
     EXTFLASH_ERR.Error = 0;    //Reset error flags
     flash_ptr.adr32b = DATA_STORAGE_BASE;
     pointer_adr.adr32b = PTR_ARR_BASE;
-	
+
     //Wait until chip erase is complete
     while(SST25VF016_Read_Status_Register() & STATUS_BUSY);
     //Verify if the chip was erased, test first TEST_ERASED_BYTES_NUM bytes starting from DATA_STORAGE_BASE
