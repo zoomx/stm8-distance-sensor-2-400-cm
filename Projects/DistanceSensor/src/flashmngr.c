@@ -57,6 +57,7 @@ ExtFlashAdr flash_ptr;     //address of the next free flash memory location
 ExtFlashAdr pointer_adr;   //address of the next flash pointer in the flash pointer array
 
 _Bool FlashMngr_GetPointer(void);
+u32 FlashMngr_GetOccupiedSpace(void);
 
 u8 FlashMngr_GetStatus()
 {
@@ -293,7 +294,7 @@ void FlashMngr_ReadData()
   EXTFLASH_STAT.Status_bits.Flash_was_Read = 1;
 }
 
-_Bool FlashMngr_Erase_Chip()
+_Bool FlashMngr_EraseChip()
 {
   u8 i, tmp;
   ExtFlashAdr tmpadr;
@@ -344,10 +345,72 @@ _Bool FlashMngr_Erase_Chip()
   return FALSE;
 }
 
-u32 FlashMngr_Get_Free_Space()
+u32 FlashMngr_GetFreeSpace()
 {
   s32 tmp;
   tmp = FLASH_MAX_ADR - flash_ptr.adr32b + 1;
   if(tmp < 0) tmp = 0;
   return (u32)(tmp);
+}
+
+u32 FlashMngr_GetOccupiedSpace()
+{
+  return (u32)(flash_ptr.adr32b - DATA_STORAGE_BASE - 1);
+}
+
+void FlashMngr_ReadDataToUART()
+{
+  ExtFlashAdr tmp_adr;
+  u32 dataSizeToSend;
+  dataSizeToSend = FlashMngr_GetOccupiedSpace();
+  tmp_adr.adr32b = DATA_STORAGE_BASE;
+  for(;dataSizeToSend > 0; dataSizeToSend--)
+  {
+    while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+    UART1_SendData8(SST25VF016_Read_Byte(tmp_adr));
+    tmp_adr.adr32b++;
+  }
+}
+
+void FlashMngr_GetOccupiedSpaceToUART()
+{
+  ExtFlashAdr tmp_val;
+  tmp_val.adr32b = FlashMngr_GetOccupiedSpace();
+  
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.Zero);           //send MSB first
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.HighByte);
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.MidByte);
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.LowByte);
+}
+
+void FlashMngr_GetHeaderSizeToUART()
+{
+  ExtFlashAdr tmp_val;
+  tmp_val.adr32b = PTR_SEC_SIZE;
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.Zero);           //send MSB first
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.HighByte);
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.MidByte);
+  while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+  UART1_SendData8(tmp_val.adr8b.LowByte);
+}
+
+void FlashMngr_ReadHeaderToUART()
+{
+  ExtFlashAdr tmp_adr;
+  u16 dataSizeToSend;
+  dataSizeToSend = PTR_SEC_SIZE;
+  tmp_adr.adr32b = PTR_ARR_SEC_ADR;
+  for(;dataSizeToSend > 0; dataSizeToSend--)
+  {
+    while(!UART1_GetFlagStatus(UART1_FLAG_TXE));
+    UART1_SendData8(SST25VF016_Read_Byte(tmp_adr));
+    tmp_adr.adr32b++;
+  }
 }

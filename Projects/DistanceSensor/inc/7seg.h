@@ -1,7 +1,9 @@
 #ifndef _7SEG_H_
 #define _7SEG_H_
 
-void SevenSegOut(u16 number);
+#include "board.h"
+
+void SevenSegOut(u16);
 void SevenSegRefresh(void);
 void SevenSegInit(void);
 
