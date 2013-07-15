@@ -48,9 +48,12 @@ volatile _Bool ERROR_cap_ovf = FALSE;
 volatile _Bool ERROR_cap_no_trig = FALSE;
 volatile _Bool ERROR_cap_sens_not_resp = FALSE;
 
-volatile _Bool FLAG_IT_SET_DATE_TIME = FALSE;
-volatile _Bool FLAG_IT_GET_STORED_DATA = FALSE;
-volatile _Bool FLAG_IT_GET_PTR_SECTOR = FALSE;
+volatile _Bool FLAG_IT_RTC_SET_DATE_TIME = FALSE;
+volatile _Bool FLAG_IT_FLSH_READ_STORED_DATA = FALSE;
+volatile _Bool FLAG_IT_FLSH_GET_OCCUPIED_SPC = FALSE;
+volatile _Bool FLAG_IT_FLSH_GET_HEADER_SIZE = FALSE;
+volatile _Bool FLAG_IT_FLSH_READ_HEADER = FALSE;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
@@ -427,19 +430,25 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
   u8 rx_data = UART1_ReceiveData8();
   /*
   RC commands:
-  0x11 - Set time and date
-  0x12 - Get PTR Sector
-  0x13 - Get Stored Data
+  0x11 - RTC:  Set time and date             FLAG_IT_RTC_SET_DATE_TIME
+  0x12 - FLASH: Read Data to UART            FLAG_IT_FLSH_READ_STORED_DATA
+  0x13 - FLASH: Get occupied space to UART   FLAG_IT_FLSH_GET_OCCUPIED_SPC
+  0x14 - FLASH: Get header size to UART      FLAG_IT_FLSH_GET_HEADER_SIZE
+  0x15 - FLASH: Read header to UART          FLAG_IT_FLSH_READ_HEADER
   */
 
   switch(rx_data)
   {
-    case 0x11: {FLAG_IT_SET_DATE_TIME = TRUE; break;}
+    case 0x11: {FLAG_IT_RTC_SET_DATE_TIME = TRUE; break;}
 
-    case 0x12: {FLAG_IT_GET_PTR_SECTOR = TRUE; break;}
+    case 0x12: {FLAG_IT_FLSH_READ_STORED_DATA = TRUE; break;}
 
-    case 0x13: {FLAG_IT_GET_STORED_DATA = TRUE; break;}
+    case 0x13: {FLAG_IT_FLSH_GET_OCCUPIED_SPC = TRUE; break;}
 
+	case 0x14: {FLAG_IT_FLSH_GET_HEADER_SIZE = TRUE; break;}
+	
+	case 0x15: {FLAG_IT_FLSH_READ_HEADER = TRUE; break;}
+	
     default: {break;}
   }
   UART1_ClearITPendingBit(UART1_IT_RXNE);

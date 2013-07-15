@@ -1,5 +1,4 @@
 #include "board.h"
-#include "7SEG.h"
 #include "delay.h"
 
 void SevenSegInit()
@@ -22,7 +21,8 @@ void SevenSegInit()
 }
 void SevenSegOut(u16 number)
 {
- u16 tmp = 0x8000, i;
+ u16 tmp = 0x8000;
+ u8 i;
  DISP_CLK_0;
  for(i = 0; i < 16; i++)
  {

@@ -26,9 +26,14 @@ _Bool FlashMngr_Init(void);
 _Bool FlashMngr_GetPointer(void);
 _Bool FlashMngr_StoreData(u8*, u16);
 void FlashMngr_ReadData(void);
-_Bool FlashMngr_Erase_Chip(void);
-u32 FlashMngr_Get_Free_Space(void);
+_Bool FlashMngr_EraseChip(void);
+u32 FlashMngr_GetFreeSpace(void);
 u8 FlashMngr_GetStatus(void);
 u8 FlashMngr_GetErrors(void);
+u32 FlashMngr_GetOccupiedSpace(void);
+void FlashMngr_ReadDataToUART(void);
+void FlashMngr_GetOccupiedSpaceToUART(void);
+void FlashMngr_GetHeaderSizeToUART(void);
+void FlashMngr_ReadHeaderToUART(void);
 
 #endif

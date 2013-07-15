@@ -33,6 +33,12 @@ extern volatile _Bool ERROR_cap_no_trig;
 extern volatile _Bool ERROR_cap_ovf;
 extern volatile _Bool ERROR_cap_sens_not_resp;
 extern volatile u16 CAPTURE_delta;
+
+extern volatile _Bool FLAG_IT_RTC_SET_DATE_TIME;
+extern volatile _Bool FLAG_IT_FLSH_READ_STORED_DATA;
+extern volatile _Bool FLAG_IT_FLSH_GET_OCCUPIED_SPC;
+extern volatile _Bool FLAG_IT_FLSH_GET_HEADER_SIZE;
+extern volatile _Bool FLAG_IT_FLSH_READ_HEADER;
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
