@@ -12,6 +12,7 @@
 #include "delay.h"
 #include "ds18b20.h"
 #include "display.h"
+#include "7seg.h"
 #include "ds3231m_rtc.h"
 #include "flashmngr.h"
 
@@ -19,14 +20,6 @@
 
 
 /* CONSTANTS ---------------------------------------------------------------*/
-
-/* Display character constants */
-const u8 SymbComma =   0x80; 
-const u16 SymbU =      0x0C70;
-const u16 SymbMinusA = 0x0100;
-const u16 SymbMinusB = 0x8000;
-const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
-const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
 
 /* DS18B20 ROM codes */
 const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};
@@ -65,8 +58,8 @@ void main(void)
   DELAY_US(1000);
   DS18B20_All_init();
   Display_Init();
-  //Light all display segments to check for failures
-  Display_SetScreen16(0, A[8] | B[8] | SymbComma, A[8] | B[8] | SymbComma);
+  //Light all display segments and dots to see eventual display failures
+  Display_SetScreen(0, "8888", COMMAPOS1 | COMMAPOS2 | COMMAPOS3 | COMMAPOS4);
   //Force a display on the screen
   Display_Cyclic();
   FlashMngr_Init();
@@ -108,12 +101,17 @@ void main(void)
    if(CYCLIC_1s)
    {
     u16 temp_frac, temp_intreg, tmp;
+	  char tempdisp[5];
     DS18B20_Read_Temp(&temperature, ROM_ID1);
     DS3231M_GetTime();
     DS3231M_GetDate();
     //Show hour and minutes on the display
-    Display_SetScreen16(1, A[(u8)(RTC_hour & 0xF0)] | B[(u8)(RTC_hour & 0x0F)], A[(u8)(RTC_min & 0xF0)] | B[(u8)(RTC_min & 0x0F)]);
-
+    tempdisp[0] = (char)((u8)((RTC_hour & 0xF0)>>4) + (u8)48);
+	  tempdisp[1] = (char)((u8)(RTC_hour & 0x0F) + (u8)48);
+	  tempdisp[2] = (char)((u8)((RTC_min & 0xF0)>>4) + (u8)48);
+	  tempdisp[3] = (char)((u8)(RTC_min & 0x0F) + (u8)48);
+	  tempdisp[4] = 0;
+    Display_SetScreen(0,  tempdisp, NOCOMMA);
     if(temperature < 0)
     {
       temperature = -(temperature);
@@ -129,12 +127,17 @@ void main(void)
     tmp = temp_frac % 1000;
     temp_frac /= 1000;
     if(tmp >= 500) temp_frac++;
-    Display_SetScreen16(0, A[(temp_intreg)%10] | B[temp_frac] | SymbComma, 0 | B[(temp_intreg)/10]);
+	  tempdisp[0] = ' ';
+	  tempdisp[1] = (char)((u8)((temp_intreg)/10) + (u8)48);
+	  tempdisp[2] = (char)((u8)((temp_intreg)%10) + (u8)48);
+	  tempdisp[3] = (char)((u8)temp_frac + (u8)48);
+	  tempdisp[4] = 0;
+	  Display_SetScreen(1,  tempdisp, COMMAPOS3);
     FLAG_ds18b20_err = DS18B20_All_convert();    /* issue DS18B20 convert command, to read the results after 1s */
 
     if((FlashMngr_GetErrors() != 0) && ((CYCLYC_1S_cnt % 2) == 0))
     {
-      Display_SetScreen16(2, SymbMinusA | SymbMinusB, SymbMinusA | SymbMinusB);
+      Display_SetScreen(2, "Er 1", NOCOMMA);
     }
 
     if(FLAG_spiflash_write && CYCLYC_1S_cnt >= 60)
