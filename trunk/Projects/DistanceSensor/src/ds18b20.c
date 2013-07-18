@@ -2,18 +2,18 @@
 #include "onewire.h"
 
 /* ROM COMMANDS */
-#define SEARCH_ROM        0XF0
-#define READ_ROM          0x33
-#define MATCH_ROM         0x55
-#define SKIP_ROM          0xCC
-#define ALARM_SEARCH      0XEC
+#define SEARCH_ROM         (u8)0XF0
+#define READ_ROM           (u8)0x33
+#define MATCH_ROM          (u8)0x55
+#define SKIP_ROM           (u8)0xCC
+#define ALARM_SEARCH       (u8)0XEC
 /* FUNCTION COMMANDS */
-#define CONVERT_T          0x44
-#define WRITE_SCRATCHPAD   0x4E
-#define READ_SCRATCHPAD    0xBE
-#define COPY_SCRATCHPAD    0X48
-#define RECALL_EE          0XB8
-#define READ_POWER_SUPPLY  0XB4
+#define CONVERT_T          (u8)0x44
+#define WRITE_SCRATCHPAD   (u8)0x4E
+#define READ_SCRATCHPAD    (u8)0xBE
+#define COPY_SCRATCHPAD    (u8)0X48
+#define RECALL_EE          (u8)0XB8
+#define READ_POWER_SUPPLY  (u8)0XB4
 
 /*
 Function to init all temperature sensors from the 1-wire network with following settings: 12bit temperature resolution (750ms conversion time)

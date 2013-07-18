@@ -34,19 +34,20 @@
 #define SENSOR_ALIVE_THRS 1000    /* 1000*2ms = 2000ms */
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-volatile u16 CAPTURE_delta = 0;
-u8 CAPTURE_status = 0;
-u8 CAPTURE_ovf_cnt = 0;
-u8 CAPTURE_no_trig_cnt = 0;
-u8 CAPTURE_no_err_cnt = 0;
-u16 sensor_alive_cnt = 0;
-u8 tmpccr3h;
-u8 tmpccr3l;
+static volatile u16 CAPTURE_delta = 0;
+static u8 CAPTURE_status = 0;
+static u8 CAPTURE_ovf_cnt = 0;
+static u8 CAPTURE_no_trig_cnt = 0;
+static u8 CAPTURE_no_err_cnt = 0;
+static u16 sensor_alive_cnt = 0;
+static u8 tmpccr3h;
+static u8 tmpccr3l;
+
+static volatile _Bool EVENT_cap_new_mes = FALSE;
+static volatile _Bool ERROR_cap_ovf = FALSE;
+static volatile _Bool ERROR_cap_no_trig = FALSE;
+static volatile _Bool ERROR_cap_sens_not_resp = FALSE;
 /* Public variables */
-volatile _Bool EVENT_cap_new_mes = FALSE;
-volatile _Bool ERROR_cap_ovf = FALSE;
-volatile _Bool ERROR_cap_no_trig = FALSE;
-volatile _Bool ERROR_cap_sens_not_resp = FALSE;
 
 volatile _Bool FLAG_IT_RTC_SET_DATE_TIME = FALSE;
 volatile _Bool FLAG_IT_FLSH_READ_STORED_DATA = FALSE;

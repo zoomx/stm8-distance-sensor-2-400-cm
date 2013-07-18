@@ -39,7 +39,7 @@ void SevenSegOut(u16 number)
  }
 }
 
-void SevenSegRefresh(void)
+void SevenSegRefresh()
 {
  DISP_nOE_1;
  DISP_LE_0;

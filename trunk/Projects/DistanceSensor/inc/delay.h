@@ -1,21 +1,23 @@
 #ifndef _DELAY_H_
 #define _DELAY_H_
 
-#define DELAY_480US 2560
-#define DELAY_70US  373
-#define DELAY_410US 2187
-#define DELAY_6US   32
-#define DELAY_64US  341
-#define DELAY_60US  320
-#define DELAY_10US  53
-#define DELAY_15US  80
-#define DELAY_9US   48
-#define DELAY_55US  293
+#include "board.h"
 
-#define I2C_DELAY      6    /* 1uS - 5.33 */
-#define SCL_SDA_DELAY  8  
+#define DELAY_480US (u16)2560
+#define DELAY_70US  (u16)373
+#define DELAY_410US (u16)2187
+#define DELAY_6US   (u8)32
+#define DELAY_64US  (u16)341
+#define DELAY_60US  (u16)320
+#define DELAY_10US  (u8)53
+#define DELAY_15US  (u8)80
+#define DELAY_9US   (u8)48
+#define DELAY_55US  (u16)293
 
-#define SPI_CS_LOW_DELAY  12   /* 2uS */
+#define I2C_DELAY      (u8)6       /* 1uS - 5.33 */
+#define SCL_SDA_DELAY  (u8)8  
+
+#define SPI_CS_LOW_DELAY  (u8)12   /* 2uS */
 
 void delay_ms(u16);
 
