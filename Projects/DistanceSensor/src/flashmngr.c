@@ -23,7 +23,7 @@ Data is meant to be stored as fixed lenght frame.
 #define INVALID_ADR(_adr)     (((u32)_adr > FLASH_MAX_ADR) && ((u32)_adr < PTR_ERASED_VAL))   //macro to determine if _adr is an invalid flash memory address (different to the erased value)
 #define PTR_OUT_OF_ARR(_adr)  ( _adr >= (PTR_ARR_BASE + PTR_ARR_SIZE))                                     //macro to determine if _adr is out of PTR_ARR
 
-union
+static union
 {
   struct
   {
@@ -37,7 +37,7 @@ union
   u8 Status;
 }EXTFLASH_STAT;
 
-union
+static union
 {
   struct
   {
@@ -52,9 +52,10 @@ union
   u8 Error;
 }EXTFLASH_ERR;
 
-u8 buffer[PTR_SIZE];
-ExtFlashAdr flash_ptr;     //address of the next free flash memory location
-ExtFlashAdr pointer_adr;   //address of the next flash pointer in the flash pointer array
+static _Bool DisableMemOP;
+static u8 buffer[PTR_SIZE];
+static ExtFlashAdr flash_ptr;     //address of the next free flash memory location
+static ExtFlashAdr pointer_adr;   //address of the next flash pointer in the flash pointer array
 
 _Bool FlashMngr_GetPointer(void);
 u32 FlashMngr_GetOccupiedSpace(void);
@@ -78,6 +79,7 @@ _Bool FlashMngr_Init()
   tmpstatus = SST25VF016_Read_Status_Register();
   flash_ptr.adr32b = DATA_STORAGE_BASE;
   pointer_adr.adr32b = PTR_ARR_BASE;
+  DisableMemOP = FALSE;
   tmp = FlashMngr_GetPointer();
   //Unlock SPI flash memory for writing
   SST25VF016_Write_Status_Register(FLASH_UNLOCK_VAL); 
@@ -196,7 +198,7 @@ _Bool FlashMngr_SavePointer(ExtFlashAdr adr)
 {
   u32 tmp;
   ExtFlashAdr tmpadr;
-  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR)
+  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR || DisableMemOP)
   {
     //Operation refused, memory locked error
     EXTFLASH_STAT.Status_bits.Operation_refused = 1;
@@ -251,7 +253,7 @@ _Bool FlashMngr_SavePointer(ExtFlashAdr adr)
 _Bool FlashMngr_StoreData(u8* data, u16 size)
 {
   u8 i, tmp;
-  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR)
+  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR || DisableMemOP)
   {
     //Operation refused, memory locked error
     EXTFLASH_STAT.Status_bits.Operation_refused = 1;
@@ -289,16 +291,11 @@ _Bool FlashMngr_StoreData(u8* data, u16 size)
   return FALSE;
 }
 
-void FlashMngr_ReadData()
-{
-  EXTFLASH_STAT.Status_bits.Flash_was_Read = 1;
-}
-
 _Bool FlashMngr_EraseChip()
 {
   u8 i, tmp;
   ExtFlashAdr tmpadr;
-  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR)
+  if(EXTFLASH_ERR.Error_bits.Memory_Locked_ERR || DisableMemOP)
   {
     //Operation refused, memory locked error
     EXTFLASH_STAT.Status_bits.Operation_refused = 1;
@@ -370,6 +367,7 @@ void FlashMngr_ReadDataToUART()
     UART1_SendData8(SST25VF016_Read_Byte(tmp_adr));
     tmp_adr.adr32b++;
   }
+  EXTFLASH_STAT.Status_bits.Flash_was_Read = 1;
 }
 
 void FlashMngr_GetOccupiedSpaceToUART()
@@ -413,4 +411,14 @@ void FlashMngr_ReadHeaderToUART()
     UART1_SendData8(SST25VF016_Read_Byte(tmp_adr));
     tmp_adr.adr32b++;
   }
+}
+
+void FlashMngr_DisableWriteOp()
+{
+  DisableMemOP = TRUE;
+}
+
+void FlashMngr_EnableWriteOp()
+{
+  DisableMemOP = FALSE;
 }

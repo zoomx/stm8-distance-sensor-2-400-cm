@@ -1,4 +1,3 @@
-#include "stm8s_conf.h"
 #include "board.h"
 
 void Config()
@@ -26,7 +25,7 @@ void Config()
   //CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, ENABLE);   /* 8bit: for implementing delays */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);   /* 16bit: for capture of ultrasonic distance pulse width */
-  CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, ENABLE);     /* Enable I2C peripheral clock */
+  //CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, ENABLE);     /* Enable I2C peripheral clock */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);     /* Enable SPI peripheral clock */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART1, ENABLE);   /* Enable UART1 peripheral clock */
 

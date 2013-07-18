@@ -1,6 +1,8 @@
 #ifndef _SST25VF016B75_H_
 #define _SST25VF016B75_H_
 
+#include "board.h"
+
 /*
 TODO: check the order of bits if correct
 */

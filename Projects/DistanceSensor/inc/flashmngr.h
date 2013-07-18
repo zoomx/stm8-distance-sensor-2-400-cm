@@ -1,6 +1,8 @@
 #ifndef _FLASHMNGR_H_
 #define _FLASHMNGR_H_
 
+#include "board.h"
+
 /*
 TODO: check the order of bits if correct
 */
@@ -35,5 +37,7 @@ void FlashMngr_ReadDataToUART(void);
 void FlashMngr_GetOccupiedSpaceToUART(void);
 void FlashMngr_GetHeaderSizeToUART(void);
 void FlashMngr_ReadHeaderToUART(void);
+void FlashMngr_DisableWriteOp(void);
+void FlashMngr_EnableWriteOp(void);
 
 #endif

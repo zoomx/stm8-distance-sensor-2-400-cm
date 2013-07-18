@@ -1,6 +1,8 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
- 
+
+#include "board.h" 
+
 #define NOCOMMA    (u8)0x00
 #define COMMAPOS1  (u8)0x01
 #define COMMAPOS2  (u8)0x02

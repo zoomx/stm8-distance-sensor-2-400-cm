@@ -1,6 +1,8 @@
 #ifndef _DS3231M_RTC_H
 #define _DS3231M_RTC_H
 
+#include "board.h"
+
 extern u8 RTC_sec;
 extern u8 RTC_min;
 extern u8 RTC_hour;

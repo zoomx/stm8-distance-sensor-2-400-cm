@@ -1,3 +1,4 @@
+#include "board.h"
 #include "display_conf.h"
 //#include "display.h"
 #include "7seg.h"
@@ -9,50 +10,52 @@
 #define COMMAPOS4  (u8)0x08
 
 /* Display character constants */
-const u8 SymbCommaA =   0x0080;
-const u8 SymbCommaB =   0x0001;
-const u16 SymbU =      0x0C70;
-const u16 SymbMinusA = 0x0100;
-const u16 SymbMinusB = 0x8000;
-const u16 SymbSpace  = 0x0000;
-const u16 Char_A_A = 0x0FE0;
-const u16 Char_A_B = 0xF006;
-const u16 Char_C_A = 0x0630;
-const u16 Char_C_B = 0x600C;
-const u16 Char_E_A = 0x0730;
-const u16 Char_E_B = 0xE00C;
-const u16 Char_F_A = 0x0720;
-const u16 Char_F_B = 0xE004;
-const u16 Char_H_A = 0x0D60;
-const u16 Char_H_B = 0xB006;
-const u16 Char_I_A = 0x0840;
-const u16 Char_I_B = 0x1002;
-const u16 Char_J_A = 0x0850;
-const u16 Char_J_B = 0x100A;
-const u16 Char_L_A = 0x0430;
-const u16 Char_L_B = 0x200C;
-const u16 Char_P_A = 0x0F20;
-const u16 Char_P_B = 0xF004;
-const u16 Char_U_A = 0x0C70;
-const u16 Char_U_B = 0x300E;
-const u16 Char_b_A = 0x0570;
-const u16 Char_b_B = 0xA00E;
-const u16 Char_d_A = 0x0970;
-const u16 Char_d_B = 0x900E;
-const u16 Char_h_A = 0x0560;
-const u16 Char_h_B = 0xA006;
-const u16 Char_i_A = 0x0040;
-const u16 Char_i_B = 0x0002;
-const u16 Char_l_A = 0x0420;
-const u16 Char_l_B = 0x2004;
-const u16 Char_n_A = 0x0160;
-const u16 Char_n_B = 0x8006;
-const u16 Char_o_A = 0x0170;
-const u16 Char_o_B = 0x800E;
-const u16 Char_u_A = 0x0070;
-const u16 Char_u_B = 0x000E;
-const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
-const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
+static const u8 SymbCommaA =   0x0080;
+static const u8 SymbCommaB =   0x0001;
+static const u16 SymbU =      0x0C70;
+static const u16 SymbMinusA = 0x0100;
+static const u16 SymbMinusB = 0x8000;
+static const u16 SymbSpace  = 0x0000;
+static const u16 Char_A_A = 0x0FE0;
+static const u16 Char_A_B = 0xF006;
+static const u16 Char_C_A = 0x0630;
+static const u16 Char_C_B = 0x600C;
+static const u16 Char_E_A = 0x0730;
+static const u16 Char_E_B = 0xE00C;
+static const u16 Char_F_A = 0x0720;
+static const u16 Char_F_B = 0xE004;
+static const u16 Char_H_A = 0x0D60;
+static const u16 Char_H_B = 0xB006;
+static const u16 Char_I_A = 0x0840;
+static const u16 Char_I_B = 0x1002;
+static const u16 Char_J_A = 0x0850;
+static const u16 Char_J_B = 0x100A;
+static const u16 Char_L_A = 0x0430;
+static const u16 Char_L_B = 0x200C;
+static const u16 Char_P_A = 0x0F20;
+static const u16 Char_P_B = 0xF004;
+static const u16 Char_U_A = 0x0C70;
+static const u16 Char_U_B = 0x300E;
+static const u16 Char_b_A = 0x0570;
+static const u16 Char_b_B = 0xA00E;
+static const u16 Char_c_A = 0x0130;
+static const u16 Char_c_B = 0x800C;
+static const u16 Char_d_A = 0x0970;
+static const u16 Char_d_B = 0x900E;
+static const u16 Char_h_A = 0x0560;
+static const u16 Char_h_B = 0xA006;
+static const u16 Char_i_A = 0x0040;
+static const u16 Char_i_B = 0x0002;
+static const u16 Char_l_A = 0x0420;
+static const u16 Char_l_B = 0x2004;
+static const u16 Char_n_A = 0x0160;
+static const u16 Char_n_B = 0x8006;
+static const u16 Char_o_A = 0x0170;
+static const u16 Char_o_B = 0x800E;
+static const u16 Char_u_A = 0x0070;
+static const u16 Char_u_B = 0x000E;
+static const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
+static const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
 
 typedef union
 {
@@ -64,9 +67,11 @@ typedef union
   u32 display32b;
 }DisplayData;
 
-static DisplayData Screens[SCREEN_NUM];
+static DisplayData Screen[SCREEN_NUM];
+static const u8 ScreenTime[SCREEN_NUM] = {2, 2, 1};
 static u8 _disp_cnt;
 static u8 _disp_curr_scr;
+static _Bool FLAG_ScreensArrayEmpty;
 
 void Display_Init()
 {
@@ -74,77 +79,71 @@ void Display_Init()
   for(i = 0; i < SCREEN_NUM; i++)
   {
     //Clear all screens
-    Screens[i].display32b = 0;
+    Screen[i].display32b = 0;
   }
   _disp_cnt = 0;
   _disp_curr_scr = 0;
+  FLAG_ScreensArrayEmpty = TRUE;
+  SevenSegInit();
+  SevenSegRefresh();
 }
 
 void Display_Cyclic()
 {
-  if(Screens[_disp_curr_scr].display32b == 0)
+  if( !FLAG_ScreensArrayEmpty )
   {
-    _disp_curr_scr++;
-    if(_disp_curr_scr >= 2) _disp_curr_scr = 0;
-  }
-  if(Screens[_disp_curr_scr].display32b != 0)
-  {
-    SevenSegOut(Screens[_disp_curr_scr].display16b.RightDigits);
-    SevenSegOut(Screens[_disp_curr_scr].display16b.LeftDigits);
+    //position _disp_curr_scr to the next screen that contains data
+	while(Screen[_disp_curr_scr].display32b == 0)
+	{
+	  _disp_curr_scr++;
+	  if(_disp_curr_scr == SCREEN_NUM) 
+	  {
+	    _disp_curr_scr = 0;
+      }
+	}
+	//Update current screen on the display
+    SevenSegOut(Screen[_disp_curr_scr].display16b.RightDigits);
+    SevenSegOut(Screen[_disp_curr_scr].display16b.LeftDigits);
     SevenSegRefresh();
+	//increment display time counter
     _disp_cnt++;
-    switch(_disp_curr_scr)
-    {
-      case 0: { 
-                if(_disp_cnt == SCREEN1TIME)
-                {
-                  _disp_cnt = 0;
-                  _disp_curr_scr = 1;
-                }
-                break;
-              }
-      case 1: { 
-                if(_disp_cnt == SCREEN2TIME)
-                {
-                  _disp_cnt = 0;
-                  _disp_curr_scr = 2;
-                }
-                break;
-              }
-      case 2: { 
-                if(_disp_cnt == SCREEN3TIME)
-                {
-                  _disp_cnt = 0;
-                  _disp_curr_scr = 0;
-                }
-                break;
-              }
-    }
+	//check if current screen reached the wanted display time
+	if(_disp_cnt == ScreenTime[_disp_curr_scr])
+	{
+	  _disp_cnt = 0;
+	  _disp_curr_scr++;
+	  if(_disp_curr_scr == SCREEN_NUM) 
+	  {
+	    _disp_curr_scr = 0;
+      }
+	}
   }
 }
 
 void Display_SetScreen32(u8 _scr_num, u32 _scr_val)
 {
-  Screens[_scr_num].display32b = _scr_val;
+  Screen[_scr_num].display32b = _scr_val;
+  FLAG_ScreensArrayEmpty = FALSE;
 }
 
 void Display_SetScreen16(u8 _scr_num, u16 _scr_leftdig, u16 _scr_rightdig)
 {
-  Screens[_scr_num].display16b.LeftDigits = _scr_leftdig;
-  Screens[_scr_num].display16b.RightDigits = _scr_rightdig;
+  Screen[_scr_num].display16b.LeftDigits = _scr_leftdig;
+  Screen[_scr_num].display16b.RightDigits = _scr_rightdig;
+  FLAG_ScreensArrayEmpty = FALSE;
 }
 
 void Display_MapCharToPos(u8 _scr_num, u8 pos, u16* A_val, u16* B_val)
 {
   switch(pos)
   {
-    case 0: {Screens[_scr_num].display16b.LeftDigits = *A_val; break;}
+    case 0: {Screen[_scr_num].display16b.LeftDigits = *A_val; break;}
   
-    case 1: {Screens[_scr_num].display16b.LeftDigits |= *B_val; break;}
+    case 1: {Screen[_scr_num].display16b.LeftDigits |= *B_val; break;}
   
-    case 2: {Screens[_scr_num].display16b.RightDigits = *A_val; break;}
+    case 2: {Screen[_scr_num].display16b.RightDigits = *A_val; break;}
   
-    case 3: {Screens[_scr_num].display16b.RightDigits |= *B_val; break;}
+    case 3: {Screen[_scr_num].display16b.RightDigits |= *B_val; break;}
   }
 }
 /*
@@ -164,7 +163,7 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
         switch(*_scr_val)
         {
           case '-': { Display_MapCharToPos(_scr_num, i, &SymbMinusA, &SymbMinusB); break; }
-		  
+  
           case ' ': { Display_MapCharToPos(_scr_num, i, &SymbSpace, &SymbSpace); break; }
         }
       }
@@ -197,6 +196,8 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
           case 'U': { Display_MapCharToPos(_scr_num, i, &Char_U_A, &Char_U_B); break; }
   
           case 'b': { Display_MapCharToPos(_scr_num, i, &Char_b_A, &Char_b_B); break; }
+
+          case 'c': { Display_MapCharToPos(_scr_num, i, &Char_c_A, &Char_c_B); break; }
   
           case 'd': { Display_MapCharToPos(_scr_num, i, &Char_d_A, &Char_d_B); break; }
   
@@ -216,13 +217,26 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
     }
   _scr_val++;
   }
-  if(commapos & COMMAPOS1) Screens[_scr_num].display16b.LeftDigits |= SymbCommaA;
-  if(commapos & COMMAPOS2) Screens[_scr_num].display16b.LeftDigits |= SymbCommaB;
-  if(commapos & COMMAPOS3) Screens[_scr_num].display16b.RightDigits |= SymbCommaA;
-  if(commapos & COMMAPOS4) Screens[_scr_num].display16b.RightDigits |= SymbCommaB;
+  if(commapos & COMMAPOS1) Screen[_scr_num].display16b.LeftDigits |= SymbCommaA;
+  if(commapos & COMMAPOS2) Screen[_scr_num].display16b.LeftDigits |= SymbCommaB;
+  if(commapos & COMMAPOS3) Screen[_scr_num].display16b.RightDigits |= SymbCommaA;
+  if(commapos & COMMAPOS4) Screen[_scr_num].display16b.RightDigits |= SymbCommaB;
+  
+  FLAG_ScreensArrayEmpty = FALSE;
 }
 
 void Display_DisableScreen(u8 _scr_num)
 {
-  Screens[_scr_num].display32b = 0;
+  u8 i;
+  Screen[_scr_num].display32b = 0;
+  //Verify if Screen array is empty
+  FLAG_ScreensArrayEmpty = TRUE;
+  for(i = 0; i < SCREEN_NUM; i++)
+  {
+    if(Screen[i].display32b != 0)
+	{
+	  FLAG_ScreensArrayEmpty = FALSE;
+	  break;
+	}
+  }
 }

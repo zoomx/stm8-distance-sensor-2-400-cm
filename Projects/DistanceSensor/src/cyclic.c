@@ -5,18 +5,28 @@
 #define DELAY_CNT_100MS  (100/TMR_OVF)
 #define DELAY_CNT_1S     (1000/TMR_OVF)
 
+#ifdef CYC_50MS
+extern void TASK_50mS(void);
+#endif
+#ifdef CYC_100MS
+extern void TASK_100mS(void);
+#endif
+#ifdef CYC_1S
+extern void TASK_1000mS(void);
+#endif
+
 #ifdef CYC_50MS 
-u8 delay_cnt_50ms = 0;
+static u8 delay_cnt_50ms = 0;
 volatile _Bool CYCLIC_50ms = FALSE;
 #endif
 
 #ifdef CYC_100MS
-u8 delay_cnt_100ms = 0;
+static u8 delay_cnt_100ms = 0;
 volatile _Bool CYCLIC_100ms = FALSE;
 #endif
 
 #ifdef CYC_1S
-u16 delay_cnt_1s = 0;
+static u16 delay_cnt_1s = 0;
 volatile _Bool CYCLIC_1s = FALSE;
 #endif
 
@@ -52,4 +62,37 @@ void Cyclic_tick(void)
     delay_cnt_1s = 0; 
   }
   #endif
+}
+
+void Cyclic_Start()
+{
+  while(1)
+  {
+    /* 50mS flag */
+    #ifdef CYC_50MS 
+    if(CYCLIC_50ms)
+	{
+	  TASK_50mS();
+	  CYCLIC_50ms = FALSE;
+	}
+    #endif
+	
+	/* 100mS flag */
+    #ifdef CYC_100MS 
+    if(CYCLIC_100ms)
+	{
+	  TASK_100mS();
+	  CYCLIC_100ms = FALSE;
+	}
+    #endif
+	
+	/* 1000mS flag */
+    #ifdef CYC_1S 
+    if(CYCLIC_1s)
+	{
+	  TASK_1000mS();
+	  CYCLIC_1s = FALSE;
+	}
+    #endif
+  }
 }

@@ -1,7 +1,7 @@
 #ifndef _DS18B20_H_
 #define _DS18B20_H_
 
-#include "stm8s.h"
+#include "board.h"
 
 u8 OW_reset(void);
 void OW_write(u8);
