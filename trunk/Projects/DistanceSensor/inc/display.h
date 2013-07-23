@@ -15,5 +15,6 @@ void Display_SetScreen32(u8, u32);
 void Display_SetScreen16(u8, u16, u16);
 void Display_SetScreen(u8, char*, u8);
 void Display_DisableScreen(u8);
+void Display_SetBrightness(u16);
 
 #endif

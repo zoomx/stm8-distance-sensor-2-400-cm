@@ -12,11 +12,9 @@ void SevenSegInit()
   DISP_CLK_0;
   DELAY_US(DELAY_6US);
  }
- DISP_nOE_1;
  DELAY_US(DELAY_6US);
  DISP_LE_1;
  DELAY_US(DELAY_6US);
- DISP_nOE_0;
  DISP_LE_0;
 }
 void SevenSegOut(u16 number)
@@ -41,11 +39,9 @@ void SevenSegOut(u16 number)
 
 void SevenSegRefresh()
 {
- DISP_nOE_1;
  DISP_LE_0;
  DELAY_US(DELAY_6US);
  DISP_LE_1;
  DELAY_US(DELAY_6US);
- DISP_nOE_0;
  DISP_LE_0;
 }
