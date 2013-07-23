@@ -240,3 +240,10 @@ void Display_DisableScreen(u8 _scr_num)
 	}
   }
 }
+/*
+Display brightness: 0-0% 5000-50% 10000-100%
+*/
+void Display_SetBrightness(u16 dimmval)
+{
+  TIM2_SetCompare1(dimmval);
+}

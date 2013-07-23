@@ -25,6 +25,7 @@ void Config()
   //CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, ENABLE);   /* 8bit: for implementing delays */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);   /* 16bit: for capture of ultrasonic distance pulse width */
+  CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER2, ENABLE);   /* 16bit: PWM output for dimming of the display */
   //CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, ENABLE);     /* Enable I2C peripheral clock */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, ENABLE);     /* Enable SPI peripheral clock */
   CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART1, ENABLE);   /* Enable UART1 peripheral clock */
@@ -92,4 +93,11 @@ void Config()
   TIM1_ClearITPendingBit(TIM1_FLAG_CC2);
   TIM1_ClearITPendingBit(TIM1_IT_UPDATE);
   //TIM1_Cmd(ENABLE);   /* Timer1 start by trigger */
+  
+  /* TIMER2 configuration - PWM output for display dimming */
+  TIM2_DeInit();
+  TIM2_TimeBaseInit(TIM2_PRESCALER_1, 10000);    // 0.625MS period - 1,6Khz
+  TIM2_OC1Init(TIM2_OCMODE_PWM1, TIM2_OUTPUTSTATE_ENABLE, 5000, TIM2_OCPOLARITY_HIGH);  // set duty to 50%
+  TIM2_OC1PreloadConfig(ENABLE);
+  TIM2_Cmd(ENABLE);
 }

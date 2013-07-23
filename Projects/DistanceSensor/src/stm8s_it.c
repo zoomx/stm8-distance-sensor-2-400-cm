@@ -42,11 +42,13 @@ static u8 CAPTURE_no_err_cnt = 0;
 static u16 sensor_alive_cnt = 0;
 static u8 tmpccr3h;
 static u8 tmpccr3l;
+static u8 Power_fail_tmr = 0;
 
 static volatile _Bool EVENT_cap_new_mes = FALSE;
 static volatile _Bool ERROR_cap_ovf = FALSE;
 static volatile _Bool ERROR_cap_no_trig = FALSE;
 static volatile _Bool ERROR_cap_sens_not_resp = FALSE;
+static volatile _Bool POWER_timer_en = FALSE;
 /* Public variables */
 
 volatile _Bool FLAG_IT_RTC_SET_DATE_TIME = FALSE;
@@ -67,6 +69,9 @@ volatile _Bool FLAG_IT_FLSH_READ_HEADER = FALSE;
   CAPTURE_status = 4   CC3 interrupt occured, capture ok (no timer overflow, rising edge trigger occured), EVENT_cap_new_mes = TRUE
   CAPTURE_status = 5   timer 1 capture occured, CC3 interrupt capture not occured
 */
+
+extern void Power_Good(void);
+extern void Power_FailDetected(void);
 
 #ifdef _COSMIC_
 /**
@@ -143,6 +148,11 @@ INTERRUPT_HANDLER(EXTI_PORTA_IRQHandler, 3)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
+  if(!POWER_timer_en) 
+  {
+    Power_FailDetected();
+    POWER_timer_en = TRUE;
+  }
 }
 
 /**
@@ -571,10 +581,18 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
   /* In order to detect unexpected events during development,
   it is recommended to set a breakpoint on the following instruction.
   */
-  /* Reduce display brightness - 50% DC */
-  if(DISP_nOE_STATE) DISP_nOE_0;
-  else DISP_nOE_1;
-  /*------------------------------------*/
+  /* Power fail external interrupt debouncing */
+  if(POWER_timer_en)
+  {
+    if(Power_fail_tmr < 255) Power_fail_tmr++;
+    if(Power_fail_tmr >= 10) 
+    {
+      Power_fail_tmr = 0;
+      POWER_timer_en = FALSE;
+	  //reset micro
+      WWDG_SWReset();
+    }
+  }
   /* Ultrasonic sensor alive watchdog */
   if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   /* to be reset in sensor ISR */
   if(sensor_alive_cnt >= SENSOR_ALIVE_THRS)

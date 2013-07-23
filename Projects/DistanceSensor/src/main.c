@@ -141,30 +141,19 @@ void Power_FailDetected()
 {
   //Wait for any memory operation in progress and then invalidate any other external memory write operations
   FlashMngr_DisableWriteOp();
-}
-
-void Power_Good()
-{
-  //To be called when power good after a power fail detection
-  FlashMngr_EnableWriteOp();
+  Display_SetBrightness(0); 
 }
 
 void main(void)
 {
   Config();
-  //SevenSegInit();
-  //SevenSegRefresh();
   DELAY_US(1000);
   DS18B20_All_init();
   Display_Init();
-  //Light all display segments and dots to see eventual display failures
-  //Display_SetScreen(0, "8888", COMMAPOS1 | COMMAPOS2 | COMMAPOS3 | COMMAPOS4);
-  //Force a display on the screen
-  //Display_Cyclic();
+  Display_SetBrightness(2500);  //display brightness to 25%
   FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
-
   enableInterrupts();
   Cyclic_Start();
 }
