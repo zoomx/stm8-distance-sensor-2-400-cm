@@ -97,7 +97,8 @@ void Config()
   /* TIMER2 configuration - PWM output for display dimming */
   TIM2_DeInit();
   TIM2_TimeBaseInit(TIM2_PRESCALER_1, 10000);    // 0.625MS period - 1,6Khz
-  TIM2_OC1Init(TIM2_OCMODE_PWM1, TIM2_OUTPUTSTATE_ENABLE, 5000, TIM2_OCPOLARITY_HIGH);  // set duty to 50%
-  TIM2_OC1PreloadConfig(ENABLE);
+  TIM2_OC2Init(TIM2_OCMODE_PWM1, TIM2_OUTPUTSTATE_ENABLE, 5000, TIM2_OCPOLARITY_HIGH);  // set duty to 50%
+  TIM2_OC2PreloadConfig(ENABLE);
   TIM2_Cmd(ENABLE);
+  GPIO_Init(GPIOD, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_FAST);
 }

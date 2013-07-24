@@ -28,6 +28,7 @@ static const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};
 static s16 temperature = 0;
 static u8 buff[16];
 static u16 CYCLYC_1S_cnt = 0;
+static u16 display_bright = 3500;   //display brightness to 25%
 /* FLAGS */
 static volatile _Bool FLAG_temp_neg = FALSE;
 static volatile _Bool FLAG_temp_read = FALSE;
@@ -150,7 +151,7 @@ void main(void)
   DELAY_US(1000);
   DS18B20_All_init();
   Display_Init();
-  Display_SetBrightness(2500);  //display brightness to 25%
+  Display_SetBrightness(display_bright);  
   FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
