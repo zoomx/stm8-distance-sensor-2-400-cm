@@ -25,7 +25,7 @@
 #include "stm8s_it.h"
 #include "board.h"
 #include "ds18b20.h"
-#include "cyclic.h"
+#include "osa.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -600,7 +600,8 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
     ERROR_cap_sens_not_resp = TRUE;
   }
   /*----------------------------------*/
-  Cyclic_tick();
+  //Cyclic_tick();
+  OS_Timer();
   TIM4_ClearITPendingBit(TIM4_IT_UPDATE);
 }
 #endif /*STM8S903*/

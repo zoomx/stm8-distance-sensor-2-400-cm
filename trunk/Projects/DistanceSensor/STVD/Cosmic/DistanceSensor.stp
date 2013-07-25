@@ -74,7 +74,7 @@ String.6.0=2011,11,23,14,32,47
 String.100.0=$(TargetFName)
 String.101.0=
 String.102.0=
-String.103.0=.\;..\..\src;..\..\..\..\libraries\stm8s_stdperiph_driver\inc;..\..\..\..\libraries\stm8s_stdperiph_driver\src;..\..\inc;
+String.103.0=.\;..\..\src;..\..\..\..\libraries\stm8s_stdperiph_driver\inc;..\..\..\..\libraries\stm8s_stdperiph_driver\src;..\..\src\osa;
 
 [Root.Config.0.Settings.2]
 String.2.0=
@@ -83,10 +83,10 @@ String.100.0=STM8S003K3
 
 [Root.Config.0.Settings.3]
 String.2.0=Compiling $(InputFile)...
-String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
+String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc -i..\..\src -i..\..\src\osa -i..\..\src\osa\port -i..\..\src\osa\port\stm8 $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
 String.4.0=$(IntermPath)$(InputName).$(ObjectExt)
 String.5.0=$(IntermPath)$(InputName).ls
-String.6.0=2013,7,18,11,15,59
+String.6.0=2013,7,25,22,3,56
 
 [Root.Config.0.Settings.4]
 String.2.0=Assembling $(InputFile)...
@@ -157,7 +157,7 @@ String.6.0=2011,11,23,14,32,47
 String.100.0=$(TargetFName)
 String.101.0=
 String.102.0=
-String.103.0=.\;..\..\src;..\..\..\..\libraries\stm8s_stdperiph_driver\inc;..\..\..\..\libraries\stm8s_stdperiph_driver\src;..\..\inc;
+String.103.0=.\;..\..\src;..\..\..\..\libraries\stm8s_stdperiph_driver\inc;..\..\..\..\libraries\stm8s_stdperiph_driver\src;..\..\src\osa;
 
 [Root.Config.1.Settings.2]
 String.2.0=
@@ -220,7 +220,7 @@ String.6.0=2011,11,23,14,32,47
 [Root.Source Files]
 ElemType=Folder
 PathName=Source Files
-Child=Root.Source Files...\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_wwdg.c
+Child=Root.Source Files...\..\src\osa\osa.c
 Next=Root.Include Files
 Config.0=Root.Source Files.Config.0
 Config.1=Root.Source Files.Config.1
@@ -245,10 +245,10 @@ Int.1=0
 
 [Root.Source Files.Config.0.Settings.1]
 String.2.0=Compiling $(InputFile)...
-String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
+String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc -i..\..\src -i..\..\src\osa -i..\..\src\osa\port -i..\..\src\osa\port\stm8 $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
 String.4.0=$(IntermPath)$(InputName).$(ObjectExt)
 String.5.0=$(IntermPath)$(InputName).ls
-String.6.0=2013,7,18,11,15,59
+String.6.0=2013,7,25,22,3,56
 
 [Root.Source Files.Config.0.Settings.2]
 String.2.0=Assembling $(InputFile)...
@@ -291,6 +291,11 @@ String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
 
+[Root.Source Files...\..\src\osa\osa.c]
+ElemType=File
+PathName=..\..\src\osa\osa.c
+Next=Root.Source Files...\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_wwdg.c
+
 [Root.Source Files...\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_wwdg.c]
 ElemType=File
 PathName=..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_wwdg.c
@@ -314,11 +319,6 @@ Next=Root.Source Files...\..\src\onewire.c
 [Root.Source Files...\..\src\onewire.c]
 ElemType=File
 PathName=..\..\src\onewire.c
-Next=Root.Source Files...\..\src\cyclic.c
-
-[Root.Source Files...\..\src\cyclic.c]
-ElemType=File
-PathName=..\..\src\cyclic.c
 Next=Root.Source Files...\..\src\softi2c.c
 
 [Root.Source Files...\..\src\softi2c.c]
@@ -413,7 +413,7 @@ PathName=..\..\..\..\libraries\stm8s_stdperiph_driver\src\stm8s_gpio.c
 [Root.Include Files]
 ElemType=Folder
 PathName=Include Files
-Child=Root.Include Files...\..\inc\config.h
+Child=Root.Include Files.Include Files\FWLib
 Config.0=Root.Include Files.Config.0
 Config.1=Root.Include Files.Config.1
 
@@ -437,10 +437,10 @@ Int.1=0
 
 [Root.Include Files.Config.0.Settings.1]
 String.2.0=Compiling $(InputFile)...
-String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
+String.3.0=cxstm8 +warn +mods0 -customDebCompat -customOpt +compact +split -customC -pp -customLst -l -dSTM8S003 -i..\..\src -i..\..\inc -i..\..\..\..\libraries\stm8s_stdperiph_driver\inc -i..\..\src -i..\..\src\osa -i..\..\src\osa\port -i..\..\src\osa\port\stm8 $(ToolsetIncOpts) -cl$(IntermPath) -co$(IntermPath) $(InputFile)
 String.4.0=$(IntermPath)$(InputName).$(ObjectExt)
 String.5.0=$(IntermPath)$(InputName).ls
-String.6.0=2013,7,18,11,15,59
+String.6.0=2013,7,25,22,3,56
 
 [Root.Include Files.Config.0.Settings.2]
 String.2.0=Assembling $(InputFile)...
@@ -482,91 +482,6 @@ String.3.0=
 String.4.0=
 String.5.0=
 String.6.0=2011,11,23,14,32,47
-
-[Root.Include Files...\..\inc\config.h]
-ElemType=File
-PathName=..\..\inc\config.h
-Next=Root.Include Files...\..\inc\display_conf.h
-
-[Root.Include Files...\..\inc\display_conf.h]
-ElemType=File
-PathName=..\..\inc\display_conf.h
-Next=Root.Include Files...\..\inc\display.h
-
-[Root.Include Files...\..\inc\display.h]
-ElemType=File
-PathName=..\..\inc\display.h
-Next=Root.Include Files...\..\inc\flashmngr.h
-
-[Root.Include Files...\..\inc\flashmngr.h]
-ElemType=File
-PathName=..\..\inc\flashmngr.h
-Next=Root.Include Files...\..\inc\sst25vf016b75.h
-
-[Root.Include Files...\..\inc\sst25vf016b75.h]
-ElemType=File
-PathName=..\..\inc\sst25vf016b75.h
-Next=Root.Include Files...\..\inc\onewire.h
-
-[Root.Include Files...\..\inc\onewire.h]
-ElemType=File
-PathName=..\..\inc\onewire.h
-Next=Root.Include Files...\..\inc\cyclic_conf.h
-
-[Root.Include Files...\..\inc\cyclic_conf.h]
-ElemType=File
-PathName=..\..\inc\cyclic_conf.h
-Next=Root.Include Files...\..\inc\cyclic.h
-
-[Root.Include Files...\..\inc\cyclic.h]
-ElemType=File
-PathName=..\..\inc\cyclic.h
-Next=Root.Include Files...\..\inc\softi2c.h
-
-[Root.Include Files...\..\inc\softi2c.h]
-ElemType=File
-PathName=..\..\inc\softi2c.h
-Next=Root.Include Files...\..\inc\ds3231m_rtc.h
-
-[Root.Include Files...\..\inc\ds3231m_rtc.h]
-ElemType=File
-PathName=..\..\inc\ds3231m_rtc.h
-Next=Root.Include Files...\..\inc\7seg.h
-
-[Root.Include Files...\..\inc\7seg.h]
-ElemType=File
-PathName=..\..\inc\7seg.h
-Next=Root.Include Files...\..\inc\board.h
-
-[Root.Include Files...\..\inc\board.h]
-ElemType=File
-PathName=..\..\inc\board.h
-Next=Root.Include Files...\..\..\..\libraries\stm8s_stdperiph_driver\inc\stm8s_tim2.h
-
-[Root.Include Files...\..\..\..\libraries\stm8s_stdperiph_driver\inc\stm8s_tim2.h]
-ElemType=File
-PathName=..\..\..\..\libraries\stm8s_stdperiph_driver\inc\stm8s_tim2.h
-Next=Root.Include Files...\..\inc\ds18b20.h
-
-[Root.Include Files...\..\inc\ds18b20.h]
-ElemType=File
-PathName=..\..\inc\ds18b20.h
-Next=Root.Include Files...\..\inc\delay.h
-
-[Root.Include Files...\..\inc\delay.h]
-ElemType=File
-PathName=..\..\inc\delay.h
-Next=Root.Include Files...\..\inc\stm8s_conf.h
-
-[Root.Include Files...\..\inc\stm8s_conf.h]
-ElemType=File
-PathName=..\..\inc\stm8s_conf.h
-Next=Root.Include Files...\..\inc\stm8s_it.h
-
-[Root.Include Files...\..\inc\stm8s_it.h]
-ElemType=File
-PathName=..\..\inc\stm8s_it.h
-Next=Root.Include Files.Include Files\FWLib
 
 [Root.Include Files.Include Files\FWLib]
 ElemType=Folder
