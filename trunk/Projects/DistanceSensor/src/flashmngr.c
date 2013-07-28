@@ -15,7 +15,7 @@ Data is meant to be stored as fixed lenght frame.
 #define BYTE_ERASED_VAL       (u8)0xFF
 #define PTR_ARR_ADR_OFFST     (u16)0          //offset in sector where the flash pointer array is stored
 #define PTR_ARR_BASE          (PTR_ARR_SEC_ADR + PTR_ARR_ADR_OFFST)
-#define PTR_ARR_LEN           (u8)1365        //make use of whole sector 0 size, 1365*3=4095 - flash pointer array size (used for wear levelling of the flash)
+#define PTR_ARR_LEN           (u16)1365        //make use of whole sector 0 size, 1365*3=4095 - flash pointer array size (used for wear levelling of the flash)
 #define DATA_STORAGE_BASE     (u32)0x001000   //flash data storage address base
 #define PTR_SIZE              (u8)3           //flash pointer size in bytes to be stored in PTR_ARR
 #define TEST_ERASED_BYTES_NUM (u8)10
@@ -111,9 +111,9 @@ u32 FlashMngr_ReadPointer(ExtFlashAdr ptr_adr)
 */
 _Bool FlashMngr_GetPointer()
 {
-  u32 ptr_old, ptr_new;
+  u32 ptr_old, ptr_new = 0;
   u8 i;
-  s16 imin, imid, imax;
+  s16 imin, imid = 0, imax;
   ExtFlashAdr tmpadr;
   if(EXTFLASH_ERR.Error_bits.Inconsistent_ERR)
   {

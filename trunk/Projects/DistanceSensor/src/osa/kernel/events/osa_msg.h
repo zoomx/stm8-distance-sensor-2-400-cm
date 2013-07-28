@@ -102,9 +102,9 @@
 
 #define OS_Msg_Send_Now(msg_cb, value)                                          \
     OSM_BEGIN {                                                                 \
-        _OS_Flags.bEventError = 0;                                               \
+        _OS_Flags.bEventError = 0;                                              \
         __OS_MSG_DI();                                                          \
-        if (OS_Msg_Check(msg_cb)) _OS_Flags.bEventError = 1;                     \
+        if (OS_Msg_Check(msg_cb)) _OS_Flags.bEventError = 1;                    \
         (msg_cb).status = 1;                                                    \
         (msg_cb).msg = OST_CONVERT_TYPE_MSG (value);                            \
         __OS_MSG_RI();                                                          \

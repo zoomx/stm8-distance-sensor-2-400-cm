@@ -1,5 +1,5 @@
 #STM Studio project file - do not edit
-#Sun Jul 14 22:49:35 GMT+02:00 2013
+#Thu Jul 25 22:51:07 GMT+02:00 2013
 Main.Version=1
 Root.Child0.IsActive=true
 Root.Child0.Name=STM-Studio-config

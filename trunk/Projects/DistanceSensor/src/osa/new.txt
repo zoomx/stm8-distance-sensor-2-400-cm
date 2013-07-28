@@ -1,4 +1,24 @@
 ====================================================================================================
+06.03.2011 (__OSA_VERSION__ 110306)
+
+1. Bug fixed for WinAVR: local variables were not saved properly on WAIT services
+2. Bug fixed for mikroC PRO (pic18): inline assembler in _OS_JumpToTask did not compiled when
+   case sensitivity option enabled
+
+====================================================================================================
+26.12.2010 (__OSA_VERSION__ 101226)
+
+1. _OS_RETURN_NOSAVE corrected for PIC18: CCS, MCC18, mikroC PRO
+   (NOP added after call to _OS_ReturnNoSave)
+
+
+
+====================================================================================================
+08.12.2010 (__OSA_VERSION__ 101208)
+
+1. _OS_RETURN_NOSAVE corrected for HT-PICC18 (NOP added after call to _OS_ReturnNoSave)
+
+====================================================================================================
 22.11.2010 (__OSA_VERSION__ 101122) 
 
 1. Fixed bug in IAR's AVR port:

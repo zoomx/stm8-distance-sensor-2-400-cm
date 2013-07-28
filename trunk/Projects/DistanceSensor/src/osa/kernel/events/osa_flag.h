@@ -117,7 +117,7 @@
 
 #define OS_Flag_Wait_AllOn(flags, mask)                                 \
     {                                                                   \
-        OS_Wait(OS_Flag_Check_AllOn(flags, mask));               \
+        OS_Wait(OS_Flag_Check_AllOn(flags, mask));                      \
     }
 
 
@@ -125,15 +125,15 @@
 
 #define OS_Flag_Wait_On(flags, mask)                                    \
     {                                                                   \
-        OS_Wait(OS_Flag_Check_On(flags, mask));                  \
+        OS_Wait(OS_Flag_Check_On(flags, mask));                         \
     }
 
 
 // Wait for all bits in flags are set by given mask. Exit if timeout expired.
 
-#define OS_Flag_Wait_AllOn_TO(flags, mask, timeout)                         \
-    {                                                                       \
-        OS_Wait_TO(OS_Flag_Check_AllOn(flags, mask), timeout);  \
+#define OS_Flag_Wait_AllOn_TO(flags, mask, timeout)                     \
+    {                                                                   \
+        OS_Wait_TO(OS_Flag_Check_AllOn(flags, mask), timeout);          \
     }
 
 
@@ -141,7 +141,7 @@
 
 #define OS_Flag_Wait_On_TO(flags, mask, timeout)                        \
     {                                                                   \
-        OS_Wait_TO(OS_Flag_Check_On(flags, mask), timeout); \
+        OS_Wait_TO(OS_Flag_Check_On(flags, mask), timeout);             \
     }
 
 
@@ -149,7 +149,7 @@
 
 #define OS_Flag_Wait_AllOff(flags, mask)                                \
     {                                                                   \
-        OS_Wait(OS_Flag_Check_AllOff(flags, mask));              \
+        OS_Wait(OS_Flag_Check_AllOff(flags, mask));                     \
     }
 
 
@@ -157,22 +157,22 @@
 
 #define OS_Flag_Wait_Off(flags, mask)                                   \
     {                                                                   \
-        OS_Wait(OS_Flag_Check_Off(flags, mask));                 \
+        OS_Wait(OS_Flag_Check_Off(flags, mask));                        \
     }
 
 
 // Wait for all bits in flag are cleared by given mask. Exit if timeout expired.
 
-#define OS_Flag_Wait_AllOff_TO(flags, mask, timeout)                        \
-    {                                                                       \
-        OS_Wait_TO(OS_Flag_Check_AllOff(flags, mask), timeout); \
+#define OS_Flag_Wait_AllOff_TO(flags, mask, timeout)                    \
+    {                                                                   \
+        OS_Wait_TO(OS_Flag_Check_AllOff(flags, mask), timeout);         \
     }
 
 // Wait for any bit in flag is cleared by given mask. Exit if timeout expired.
 
 #define OS_Flag_Wait_Off_TO(flags, mask, timeout)                       \
     {                                                                   \
-        OS_Wait_TO(OS_Flag_Check_Off(flags, mask), timeout);\
+        OS_Wait_TO(OS_Flag_Check_Off(flags, mask), timeout);            \
     }
 
 
