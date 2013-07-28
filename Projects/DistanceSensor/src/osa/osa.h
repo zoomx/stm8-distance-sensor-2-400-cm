@@ -46,6 +46,11 @@
  * 
  *                  08.12.2010  -   osa_pic18_htpicc.h
  * 
+ *                  26.12.2010  -   Bug fixed for PIC18: _OS_RETURN_NO_SAVE
+ * 
+ *                  06.03.2011  -   osa_avr_winavr.c
+ *                                  osa_avr_winavr.h
+ *                                  osa_pic18_mikroc.c 
  *
  *
  ************************************************************************************************
@@ -56,7 +61,7 @@
 
 
 
-#define __OSA_VERSION__         101208          /* 8 dec, 2010    */
+#define __OSA_VERSION__         110306          /* 6 mar, 2011    */
 
 
 
