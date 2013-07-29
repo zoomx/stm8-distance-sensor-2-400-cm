@@ -69,8 +69,7 @@ volatile _Bool FLAG_IT_FLSH_READ_HEADER = FALSE;
   CAPTURE_status = 4   CC3 interrupt occured, capture ok (no timer overflow, rising edge trigger occured), EVENT_cap_new_mes = TRUE
   CAPTURE_status = 5   timer 1 capture occured, CC3 interrupt capture not occured
 */
-
-extern void Power_Good(void);
+extern OST_SMSG smsg_rx_rec;
 extern void Power_FailDetected(void);
 
 #ifdef _COSMIC_
@@ -447,21 +446,8 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
   0x14 - FLASH: Get header size to UART      FLAG_IT_FLSH_GET_HEADER_SIZE
   0x15 - FLASH: Read header to UART          FLAG_IT_FLSH_READ_HEADER
   */
+  OS_Smsg_Send_I(smsg_rx_rec, (OST_SMSG)rx_data);
 
-  switch(rx_data)
-  {
-    case 0x11: {FLAG_IT_RTC_SET_DATE_TIME = TRUE; break;}
-
-    case 0x12: {FLAG_IT_FLSH_READ_STORED_DATA = TRUE; break;}
-
-    case 0x13: {FLAG_IT_FLSH_GET_OCCUPIED_SPC = TRUE; break;}
-
-	case 0x14: {FLAG_IT_FLSH_GET_HEADER_SIZE = TRUE; break;}
-	
-	case 0x15: {FLAG_IT_FLSH_READ_HEADER = TRUE; break;}
-	
-    default: {break;}
-  }
   UART1_ClearITPendingBit(UART1_IT_RXNE);
 }
 #endif /*STM8S208 or STM8S207 or STM8S103 or STM8S903 or STM8AF62Ax or STM8AF52Ax */

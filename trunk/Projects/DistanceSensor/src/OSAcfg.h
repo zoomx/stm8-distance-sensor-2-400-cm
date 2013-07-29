@@ -21,9 +21,9 @@
 // ENABLE CONSTANTS
 //------------------------------------------------------------------------------
 
-#define OS_ENABLE_TTIMERS          // Enable task timers (allows to use OS_Delay and OS_xxx_Wait_TO)
-
-
+#define OS_ENABLE_TTIMERS                      // Enable task timers (allows to use OS_Delay and OS_xxx_Wait_TO)
+#define OS_PRIORITY_LEVEL  OS_PRIORITY_NORMAL  // (defaul) Normal priority mode with checking tasks in order of creation 
+#define OS_ENABLE_INT_SMSG                     // Allows the use of simple message services within interrupts 
 
 
 
