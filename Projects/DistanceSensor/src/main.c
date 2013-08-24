@@ -103,19 +103,19 @@ void TASK_UARTCommands()
   
       switch(rcvd_message)
       {
-        case 0x11: {
-                     DS3231M_SetTime();
-                     DS3231M_SetDate();
+        case 't': {
+                     //DS3231M_SetTime();
+                     //DS3231M_SetDate();
                      break;
                    }
 
-        case 0x12: {FlashMngr_ReadDataToUART();         break;}
+        case 'd': {FlashMngr_ReadDataToUART();         break;}
 
-        case 0x13: {FlashMngr_GetOccupiedSpaceToUART(); break;}
+        case 's': {FlashMngr_GetOccupiedSpaceToUART(); break;}
 
-        case 0x14: {FlashMngr_GetHeaderSizeToUART();    break;}
+        case 'r': {FlashMngr_GetHeaderSizeToUART();    break;}
 
-        case 0x15: {FlashMngr_ReadHeaderToUART();       break;}
+        case 'h': {FlashMngr_ReadHeaderToUART();       break;}
       }
     }
 }  
