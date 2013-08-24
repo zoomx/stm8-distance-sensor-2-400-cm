@@ -437,7 +437,7 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
-  u8 rx_data = UART1_ReceiveData8();
+  u8 rx_data = (u8)UART1->DR;
   /*
   RC commands:
   0x11 - RTC:  Set time and date             FLAG_IT_RTC_SET_DATE_TIME
@@ -448,7 +448,7 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
   */
   OS_Smsg_Send_I(smsg_rx_rec, (OST_SMSG)rx_data);
 
-  UART1_ClearITPendingBit(UART1_IT_RXNE);
+  //UART1_ClearITPendingBit(UART1_IT_RXNE);
 }
 #endif /*STM8S208 or STM8S207 or STM8S103 or STM8S903 or STM8AF62Ax or STM8AF52Ax */
 
