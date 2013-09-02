@@ -7,7 +7,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "board.h" 
 #include "stm8s_it.h"
-//#include "cyclic.h"
 #include "config.h"
 #include "delay.h"
 #include "ds18b20.h"
@@ -38,7 +37,8 @@ static volatile _Bool FLAG_ds18b20_err = FALSE;
 static volatile _Bool FLAG_spiflash_access = FALSE;
 static volatile _Bool FLAG_spiflash_write = TRUE;
 static volatile _Bool FLAG_ExtFlashinit_OK = FALSE;
-static u16 temp_intreg;
+static u8 temp_intreg;
+static u8 temp_frac;
 
 OST_SMSG    smsg_rx_rec;
 OST_MSG_CB  msg_cb;
@@ -82,15 +82,19 @@ void main(void)
 
 void TASK_LogDataToFlash()
 {
-  u8 buff[4];
+  u8 buff[8];
   for(;;)
   {
     OS_Delay(30000);    // once every 60sec
     buff[0] = (u8)temp_intreg;
-    buff[1] = (u8)RTC_hour;
-    buff[2] = (u8)RTC_min;
-    buff[3] = (u8)RTC_sec;
-    FlashMngr_StoreData(buff, 4);
+    buff[1] = (u8)temp_frac;
+    buff[2] = (u8)RTC_hour;
+    buff[3] = (u8)RTC_min;
+    buff[4] = (u8)RTC_sec;
+    buff[5] = (u8)RTC_day;
+    buff[6] = (u8)RTC_month;
+    buff[7] = (u8)RTC_year;
+    FlashMngr_StoreData(buff, 8);
   }
 }
 
@@ -109,20 +113,22 @@ void TASK_UARTCommands()
                      break;
                    }
 
-        case 'd': {FlashMngr_ReadDataToUART();         break;}
+        case 'd': {FlashMngr_ReadDataToUART(); break;}
 
         case 's': {FlashMngr_GetOccupiedSpaceToUART(); break;}
 
-        case 'r': {FlashMngr_GetHeaderSizeToUART();    break;}
+        case 'r': {FlashMngr_GetHeaderSizeToUART(); break;}
 
-        case 'h': {FlashMngr_ReadHeaderToUART();       break;}
+        case 'h': {FlashMngr_ReadHeaderToUART(); break;}
+
+        case 'a': {FlashMngr_EraseChip(); break;}
       }
     }
 }  
  
 void TASK_1000mS()
 {
-  u16 temp_frac, tmp;
+  //u16 l_temp_frac, tmp;
   char tempdisp[5];
   for (;;)
   {
@@ -146,13 +152,16 @@ void TASK_1000mS()
     {
       FLAG_temp_neg = FALSE;
     }
-    temp_intreg = temperature>>4;
-    temp_frac = temperature - (temp_intreg<<4);
-    temp_frac *= 625;
-    tmp = temp_frac % 1000;
-    temp_frac /= 1000;
-    if(tmp >= 500) temp_frac++;
-	//Show temperature on the display
+    temp_intreg = (u8)(temperature>>4);
+    temp_frac = (u8)(temperature - (temp_intreg<<4));
+    //l_temp_frac *= 625;
+    //temp_frac can be [0-15]
+    temp_frac *= 10;  //(temp_frac * 10) / 16  Scale to [0-9]
+    temp_frac >>= 4;
+    //tmp = l_temp_frac % 1000;
+    //l_temp_frac /= 1000;
+    //if(tmp >= 500) l_temp_frac++;
+	  //Show temperature on the display
     tempdisp[0] = (char)((u8)((temp_intreg)/10) + (u8)48);
     tempdisp[1] = (char)((u8)((temp_intreg)%10) + (u8)48);
     tempdisp[2] = (char)((u8)temp_frac + (u8)48);

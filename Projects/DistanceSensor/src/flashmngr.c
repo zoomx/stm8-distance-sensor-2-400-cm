@@ -367,8 +367,6 @@ void FlashMngr_ReadDataToUART()
     UART1->DR = SST25VF016_Read_Byte(tmp_adr);
     tmp_adr.adr32b++;
   }
-  while(!(UART1->SR & UART1_FLAG_TXE));
-  UART1->DR = SST25VF016_Read_Byte(tmp_adr);
   EXTFLASH_STAT.Status_bits.Flash_was_Read = 1;
 }
 
