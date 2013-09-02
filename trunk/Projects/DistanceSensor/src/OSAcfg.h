@@ -14,7 +14,9 @@
 // SYSTEM
 //------------------------------------------------------------------------------
 
-#define OS_TASKS               2  // Number of tasks that can be active at one time
+#define OS_TASKS       3  // Number of tasks that can be active at one time
+#define OS_TIMER_SIZE  2
+#define OS_TTIMER_SIZE 2
 
 
 //------------------------------------------------------------------------------
