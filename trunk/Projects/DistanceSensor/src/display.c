@@ -9,6 +9,8 @@
 #define COMMAPOS3  (u8)0x04
 #define COMMAPOS4  (u8)0x08
 
+//#define USE_EXT_CHAR 
+
 /* Display character constants */
 static const u8 SymbCommaA =   0x0080;
 static const u8 SymbCommaB =   0x0001;
@@ -16,12 +18,15 @@ static const u16 SymbU =      0x0C70;
 static const u16 SymbMinusA = 0x0100;
 static const u16 SymbMinusB = 0x8000;
 static const u16 SymbSpace  = 0x0000;
+#ifdef USE_EXT_CHAR
 static const u16 Char_A_A = 0x0FE0;
 static const u16 Char_A_B = 0xF006;
 static const u16 Char_C_A = 0x0630;
 static const u16 Char_C_B = 0x600C;
+#endif
 static const u16 Char_E_A = 0x0730;
 static const u16 Char_E_B = 0xE00C;
+#ifdef USE_EXT_CHAR
 static const u16 Char_F_A = 0x0720;
 static const u16 Char_F_B = 0xE004;
 static const u16 Char_H_A = 0x0D60;
@@ -38,8 +43,10 @@ static const u16 Char_U_A = 0x0C70;
 static const u16 Char_U_B = 0x300E;
 static const u16 Char_b_A = 0x0570;
 static const u16 Char_b_B = 0xA00E;
+#endif
 static const u16 Char_c_A = 0x0130;
 static const u16 Char_c_B = 0x800C;
+#ifdef USE_EXT_CHAR
 static const u16 Char_d_A = 0x0970;
 static const u16 Char_d_B = 0x900E;
 static const u16 Char_h_A = 0x0560;
@@ -54,6 +61,7 @@ static const u16 Char_o_A = 0x0170;
 static const u16 Char_o_B = 0x800E;
 static const u16 Char_u_A = 0x0070;
 static const u16 Char_u_B = 0x000E;
+#endif
 static const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
 static const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
 
@@ -175,12 +183,15 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
       {
         switch(*_scr_val)
         {
+          #ifdef USE_EXT_CHAR
           case 'A': { Display_MapCharToPos(_scr_num, i, &Char_A_A, &Char_A_B); break; }
   
           case 'C': { Display_MapCharToPos(_scr_num, i, &Char_C_A, &Char_C_B); break; }
-  
+          #endif
+          
           case 'E': { Display_MapCharToPos(_scr_num, i, &Char_E_A, &Char_E_B); break; }
   
+          #ifdef USE_EXT_CHAR
           case 'F': { Display_MapCharToPos(_scr_num, i, &Char_F_A, &Char_F_B); break; }
   
           case 'H': { Display_MapCharToPos(_scr_num, i, &Char_H_A, &Char_H_B); break; }
@@ -196,9 +207,11 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
           case 'U': { Display_MapCharToPos(_scr_num, i, &Char_U_A, &Char_U_B); break; }
   
           case 'b': { Display_MapCharToPos(_scr_num, i, &Char_b_A, &Char_b_B); break; }
+          #endif
 
           case 'c': { Display_MapCharToPos(_scr_num, i, &Char_c_A, &Char_c_B); break; }
   
+          #ifdef USE_EXT_CHAR
           case 'd': { Display_MapCharToPos(_scr_num, i, &Char_d_A, &Char_d_B); break; }
   
           case 'h': { Display_MapCharToPos(_scr_num, i, &Char_h_A, &Char_h_B); break; }
@@ -212,6 +225,7 @@ void Display_SetScreen(u8 _scr_num, char* _scr_val, u8 commapos)
           case 'o': { Display_MapCharToPos(_scr_num, i, &Char_o_A, &Char_o_B); break; }	
  
           case 'u': { Display_MapCharToPos(_scr_num, i, &Char_u_A, &Char_u_B); break; } 
+          #endif
         }
       }
     }
