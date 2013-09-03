@@ -15,6 +15,7 @@
 #include "ds3231m_rtc.h"
 #include "flashmngr.h"
 #include "osa\osa.h"
+#include "calibdata.h"
 //#include "OSAcfg.h"
 
 /* Defines ---------------------------------------------------------*/
@@ -22,12 +23,15 @@
 
 /* CONSTANTS ---------------------------------------------------------------*/
 
-/* DS18B20 ROM codes */
-static const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};
-
+/* Calibration variables */
+static const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};  /* DS18B20 ROM ID */
+static const u16 DataLogInterval = 30000;    /* 60sec */
+static const u16 Display_Brightness = 3500;  /* display brightness to 25% */
 /* Global variables ----------------------------------------------------------*/
 static s16 temperature = 0;
-static u16 display_bright = 3500;   //display brightness to 25%
+static u8 temp_intreg;
+static u8 temp_frac;
+u8 buff[8];
 /* FLAGS */
 static volatile _Bool FLAG_temp_neg = FALSE;
 static volatile _Bool FLAG_dist_samp_read = FALSE;
@@ -37,8 +41,6 @@ static volatile _Bool FLAG_ds18b20_err = FALSE;
 static volatile _Bool FLAG_spiflash_access = FALSE;
 static volatile _Bool FLAG_spiflash_write = TRUE;
 static volatile _Bool FLAG_ExtFlashinit_OK = FALSE;
-static u8 temp_intreg;
-static u8 temp_frac;
 
 OST_SMSG    smsg_rx_rec;
 OST_MSG_CB  msg_cb;
@@ -64,7 +66,7 @@ void main(void)
   DELAY_US(1000);
   DS18B20_All_init();
   Display_Init();
-  Display_SetBrightness(display_bright);  
+  Display_SetBrightness(Display_Brightness);  
   FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
@@ -82,25 +84,27 @@ void main(void)
 
 void TASK_LogDataToFlash()
 {
-  u8 buff[8];
+  u8 l_buff[8];
   for(;;)
   {
-    OS_Delay(30000);    // once every 60sec
-    buff[0] = (u8)temp_intreg;
-    buff[1] = (u8)temp_frac;
-    buff[2] = (u8)RTC_hour;
-    buff[3] = (u8)RTC_min;
-    buff[4] = (u8)RTC_sec;
-    buff[5] = (u8)RTC_day;
-    buff[6] = (u8)RTC_month;
-    buff[7] = (u8)RTC_year;
-    FlashMngr_StoreData(buff, 8);
+    OS_Delay(DataLogInterval);
+    l_buff[0] = (u8)temp_intreg;
+    l_buff[1] = (u8)temp_frac;
+    l_buff[2] = (u8)RTC_hour;
+    l_buff[3] = (u8)RTC_min;
+    l_buff[4] = (u8)RTC_sec;
+    l_buff[5] = (u8)RTC_day;
+    l_buff[6] = (u8)RTC_month;
+    l_buff[7] = (u8)RTC_year;
+    FlashMngr_StoreData(l_buff, 8);
   }
 }
 
 void TASK_UARTCommands()
 {
   OST_SMSG rcvd_message;
+  u8 l_size, tmp;
+  u16 l_address;
   for (;;)
     {
       OS_Smsg_Wait(smsg_rx_rec, rcvd_message);
@@ -122,13 +126,36 @@ void TASK_UARTCommands()
         case 'h': {FlashMngr_ReadHeaderToUART(); break;}
 
         case 'a': {FlashMngr_EraseChip(); break;}
+
+        case 'c': {
+                    u8 l_idx = 0;
+                    UART1_ITConfig(UART1_IT_RXNE, DISABLE);
+                    //Receive size of data to be updated in FLASH
+                    while(!(UART1->SR & (u8)0x20));
+                    l_size = UART1->DR;
+                    tmp = l_size;
+					          //Receive FLASH destination address
+                    while(!(UART1->SR & (u8)0x20));
+                    l_address = UART1->DR;
+					          l_address <<= 8;
+					          while(!(UART1->SR & (u8)0x20));
+                    l_address |= UART1->DR;
+                    //Receive data to be updated in FLASH
+                    while(l_size > 0)
+                    {
+                      while(!(UART1->SR & (u8)0x20));
+                      buff[l_idx++] = UART1->DR;
+                      l_size--;
+                    }
+                    CalibData_Update(l_address, buff, tmp);
+                    UART1_ITConfig(UART1_IT_RXNE, ENABLE);
+          };
       }
     }
 }  
  
 void TASK_1000mS()
 {
-  //u16 l_temp_frac, tmp;
   char tempdisp[5];
   for (;;)
   {
@@ -154,14 +181,10 @@ void TASK_1000mS()
     }
     temp_intreg = (u8)(temperature>>4);
     temp_frac = (u8)(temperature - (temp_intreg<<4));
-    //l_temp_frac *= 625;
     //temp_frac can be [0-15]
     temp_frac *= 10;  //(temp_frac * 10) / 16  Scale to [0-9]
     temp_frac >>= 4;
-    //tmp = l_temp_frac % 1000;
-    //l_temp_frac /= 1000;
-    //if(tmp >= 500) l_temp_frac++;
-	  //Show temperature on the display
+	//Show temperature on the display
     tempdisp[0] = (char)((u8)((temp_intreg)/10) + (u8)48);
     tempdisp[1] = (char)((u8)((temp_intreg)%10) + (u8)48);
     tempdisp[2] = (char)((u8)temp_frac + (u8)48);

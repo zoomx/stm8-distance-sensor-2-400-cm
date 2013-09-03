@@ -8,7 +8,7 @@
 #define COMMAPOS2  (u8)0x02
 #define COMMAPOS3  (u8)0x04
 #define COMMAPOS4  (u8)0x08
- 
+
 void Display_Init(void);
 void Display_Cyclic(void);
 void Display_SetScreen32(u8, u32);
