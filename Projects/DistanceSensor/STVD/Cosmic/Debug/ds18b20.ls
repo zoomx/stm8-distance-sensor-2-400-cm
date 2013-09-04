@@ -1,251 +1,214 @@
    1                     ; C Compiler for STM8 (COSMIC Software)
    2                     ; Parser V4.10.13 - 06 Dec 2012
    3                     ; Generator (Limited) V4.3.9 - 06 Dec 2012
-  57                     ; 28 u8 OW_reset(void)
-  57                     ; 29 {
-  59                     .text:	section	.text,new
-  60  0000               _OW_reset:
-  62  0000 88            	push	a
-  63       00000001      OFST:	set	1
-  66                     ; 32   OW_LOW();                /* master - drive bus low */
-  68  0001 721d5005      	bres	20485,#6
-  69                     ; 33   DELAY_US(DELAY_480US);   /* master - wait for 480us (H-480,480,640) */
-  71  0005 ae0a00        	ldw	x,#2560
-  73  0008               L6: 
-  74  0008 5a             decw X 
-  75  0009 26fd           jrne L6 
-  76  000b 9d             nop
-  78                     ; 34   OW_HIGH();
-  81  000c 721c5005      	bset	20485,#6
-  82                     ; 36   DELAY_US(DELAY_70US);    /* master - wait for 70us (I-63,70,78) */
-  84  0010 ae0175        	ldw	x,#373
-  86  0013               L01: 
-  87  0013 5a             decw X 
-  88  0014 26fd           jrne L01 
-  89  0016 9d             nop
-  91                     ; 37   result = OW_READ();
-  94  0017 c65006        	ld	a,20486
-  95  001a a440          	and	a,#64
-  96  001c 6b01          	ld	(OFST+0,sp),a
-  97                     ; 38   DELAY_US(DELAY_410US);   /* master - wait for 410us (J-410,410,N/A) */
-  99  001e ae088b        	ldw	x,#2187
- 101  0021               L21: 
- 102  0021 5a             decw X 
- 103  0022 26fd           jrne L21 
- 104  0024 9d             nop
- 106                     ; 39   OW_HIGH();               /* master - release bus */
- 109  0025 721c5005      	bset	20485,#6
- 110                     ; 41   return result;
- 112  0029 7b01          	ld	a,(OFST+0,sp)
- 115  002b 5b01          	addw	sp,#1
- 116  002d 81            	ret
- 159                     ; 44 void OW_write_8(u8 data)
- 159                     ; 45 {
- 160                     .text:	section	.text,new
- 161  0000               _OW_write_8:
- 163  0000 88            	push	a
- 164  0001 88            	push	a
- 165       00000001      OFST:	set	1
- 168                     ; 47   for(i=0; i<8; i++)
- 170  0002 0f01          	clr	(OFST+0,sp)
- 171  0004               L15:
- 172                     ; 49     if(data & 0x01)
- 174  0004 7b02          	ld	a,(OFST+1,sp)
- 175  0006 a501          	bcp	a,#1
- 176  0008 2718          	jreq	L75
- 177                     ; 51 	  OW_LOW();               /* master - drive bus low */
- 179  000a 721d5005      	bres	20485,#6
- 180                     ; 52 	  DELAY_US(DELAY_6US);    /* master - wait 6us (A-5,6,15) */
- 182  000e ae0020        	ldw	x,#32
- 184  0011               L61: 
- 185  0011 5a             decw X 
- 186  0012 26fd           jrne L61 
- 187  0014 9d             nop
- 189                     ; 53 	  OW_HIGH();              /* master - release bus */
- 192  0015 721c5005      	bset	20485,#6
- 193                     ; 54 	  DELAY_US(DELAY_64US);   /* master - wait 64us (B-59,64,N/A) */
- 195  0019 ae0155        	ldw	x,#341
- 197  001c               L02: 
- 198  001c 5a             decw X 
- 199  001d 26fd           jrne L02 
- 200  001f 9d             nop
- 204  0020 2016          	jra	L16
- 205  0022               L75:
- 206                     ; 58 	  OW_LOW();                /* master - drive bus low */
- 208  0022 721d5005      	bres	20485,#6
- 209                     ; 59 	  DELAY_US(DELAY_60US);    /* master - wait 60us (C-60,60,120) */
- 211  0026 ae0140        	ldw	x,#320
- 213  0029               L22: 
- 214  0029 5a             decw X 
- 215  002a 26fd           jrne L22 
- 216  002c 9d             nop
- 218                     ; 60 	  OW_HIGH();               /* master - release bus */
- 221  002d 721c5005      	bset	20485,#6
- 222                     ; 61 	  DELAY_US(DELAY_10US);    /* master - wait 10us (D-8,10,N/A) */
- 224  0031 ae0035        	ldw	x,#53
- 226  0034               L42: 
- 227  0034 5a             decw X 
- 228  0035 26fd           jrne L42 
- 229  0037 9d             nop
- 231  0038               L16:
- 232                     ; 63     data >>= 1;
- 234  0038 0402          	srl	(OFST+1,sp)
- 235                     ; 47   for(i=0; i<8; i++)
- 237  003a 0c01          	inc	(OFST+0,sp)
- 240  003c 7b01          	ld	a,(OFST+0,sp)
- 241  003e a108          	cp	a,#8
- 242  0040 25c2          	jrult	L15
- 243                     ; 65 }
- 246  0042 85            	popw	x
- 247  0043 81            	ret
- 291                     ; 66 u8 OW_read_8(void)
- 291                     ; 67 {
- 292                     .text:	section	.text,new
- 293  0000               _OW_read_8:
- 295  0000 89            	pushw	x
- 296       00000002      OFST:	set	2
- 299                     ; 69   u8 result = 0;
- 301  0001 0f02          	clr	(OFST+0,sp)
- 302                     ; 71   for(i=0; i<8; i++)
- 304  0003 0f01          	clr	(OFST-1,sp)
- 305  0005               L501:
- 306                     ; 73     result >>= 1;
- 308  0005 0402          	srl	(OFST+0,sp)
- 309                     ; 74 	  OW_LOW();                 /* master - drive bus low */
- 311  0007 721d5005      	bres	20485,#6
- 312                     ; 75 	  DELAY_US(DELAY_6US);      /* master - wait 6us (A-5,6,15) */
- 314  000b ae0020        	ldw	x,#32
- 316  000e               L03: 
- 317  000e 5a             decw X 
- 318  000f 26fd           jrne L03 
- 319  0011 9d             nop
- 321                     ; 76 	  OW_HIGH();                /* master - release bus */
- 324  0012 721c5005      	bset	20485,#6
- 325                     ; 77 	  DELAY_US(DELAY_9US);       /* master - wait 9us (E-5,9,12) */
- 327  0016 ae0030        	ldw	x,#48
- 329  0019               L23: 
- 330  0019 5a             decw X 
- 331  001a 26fd           jrne L23 
- 332  001c 9d             nop
- 334                     ; 78     if(OW_READ())  result |= 0x80;
- 337  001d c65006        	ld	a,20486
- 338  0020 a540          	bcp	a,#64
- 339  0022 2706          	jreq	L311
- 342  0024 7b02          	ld	a,(OFST+0,sp)
- 343  0026 aa80          	or	a,#128
- 344  0028 6b02          	ld	(OFST+0,sp),a
- 345  002a               L311:
- 346                     ; 79     DELAY_US(DELAY_55US);     /* master - wait 55us (F-50,55,N/A) */
- 348  002a ae0125        	ldw	x,#293
- 350  002d               L43: 
- 351  002d 5a             decw X 
- 352  002e 26fd           jrne L43 
- 353  0030 9d             nop
- 355                     ; 71   for(i=0; i<8; i++)
- 358  0031 0c01          	inc	(OFST-1,sp)
- 361  0033 7b01          	ld	a,(OFST-1,sp)
- 362  0035 a108          	cp	a,#8
- 363  0037 25cc          	jrult	L501
- 364                     ; 81   return (result);
- 366  0039 7b02          	ld	a,(OFST+0,sp)
- 369  003b 85            	popw	x
- 370  003c 81            	ret
- 406                     ; 84 void DS18B20_init(void)
- 406                     ; 85 {
- 407                     .text:	section	.text,new
- 408  0000               _DS18B20_init:
- 410  0000 88            	push	a
- 411       00000001      OFST:	set	1
- 414                     ; 86   u8 stat = OW_reset();
- 416  0001 cd0000        	call	_OW_reset
- 418  0004 6b01          	ld	(OFST+0,sp),a
- 419                     ; 87   OW_write_8(SKIP_ROM_COMMAND);   /* SKIP ROM command - used when only one sensor on bus */
- 421  0006 a6cc          	ld	a,#204
- 422  0008 cd0000        	call	_OW_write_8
- 424                     ; 88   OW_write_8(WRITE_SCRATCHPAD_COMMAND);   /* WRITE SCRATCHPAD command */
- 426  000b a64e          	ld	a,#78
- 427  000d cd0000        	call	_OW_write_8
- 429                     ; 89   OW_write_8(0x00);   /* TH register or User Byte 1 */
- 431  0010 4f            	clr	a
- 432  0011 cd0000        	call	_OW_write_8
- 434                     ; 90   OW_write_8(0x00);   /* TL register or User Byte 2 */
- 436  0014 4f            	clr	a
- 437  0015 cd0000        	call	_OW_write_8
- 439                     ; 91   OW_write_8(0x7F);   /* configuration register: 12 bit resolution - 750ms conversion time */
- 441  0018 a67f          	ld	a,#127
- 442  001a cd0000        	call	_OW_write_8
- 444                     ; 92 }
- 447  001d 84            	pop	a
- 448  001e 81            	ret
- 473                     ; 94 void DS18B20_convert(void)
- 473                     ; 95 {
- 474                     .text:	section	.text,new
- 475  0000               _DS18B20_convert:
- 479                     ; 96   OW_reset();
- 481  0000 cd0000        	call	_OW_reset
- 483                     ; 97   OW_write_8(SKIP_ROM_COMMAND);
- 485  0003 a6cc          	ld	a,#204
- 486  0005 cd0000        	call	_OW_write_8
- 488                     ; 98   OW_write_8(CONVERT_T_COMMAND);
- 490  0008 a644          	ld	a,#68
- 491  000a cd0000        	call	_OW_write_8
- 493                     ; 99 }
- 496  000d 81            	ret
- 533                     ; 101 s16 DS18B20_read_16(void)
- 533                     ; 102 {
- 534                     .text:	section	.text,new
- 535  0000               _DS18B20_read_16:
- 537  0000 89            	pushw	x
- 538       00000002      OFST:	set	2
- 541                     ; 104   OW_reset();
- 543  0001 cd0000        	call	_OW_reset
- 545                     ; 105   OW_write_8(SKIP_ROM_COMMAND);
- 547  0004 a6cc          	ld	a,#204
- 548  0006 cd0000        	call	_OW_write_8
- 550                     ; 106   OW_write_8(READ_SCRATCHPAD_COMMAND);
- 552  0009 a6be          	ld	a,#190
- 553  000b cd0000        	call	_OW_write_8
- 555                     ; 107   res = OW_read_8();
- 557  000e cd0000        	call	_OW_read_8
- 559  0011 5f            	clrw	x
- 560  0012 97            	ld	xl,a
- 561  0013 1f01          	ldw	(OFST-1,sp),x
- 562                     ; 108   res |= OW_read_8() << 8;
- 564  0015 cd0000        	call	_OW_read_8
- 566  0018 5f            	clrw	x
- 567  0019 97            	ld	xl,a
- 568  001a 4f            	clr	a
- 569  001b 02            	rlwa	x,a
- 570  001c 01            	rrwa	x,a
- 571  001d 1a02          	or	a,(OFST+0,sp)
- 572  001f 01            	rrwa	x,a
- 573  0020 1a01          	or	a,(OFST-1,sp)
- 574  0022 01            	rrwa	x,a
- 575  0023 1f01          	ldw	(OFST-1,sp),x
- 576                     ; 109   return (s16)res;
- 578  0025 1e01          	ldw	x,(OFST-1,sp)
- 581  0027 5b02          	addw	sp,#2
- 582  0029 81            	ret
- 608                     ; 111 u8 DS18B20_read_8(void)
- 608                     ; 112 {
- 609                     .text:	section	.text,new
- 610  0000               _DS18B20_read_8:
- 614                     ; 113   OW_reset();
- 616  0000 cd0000        	call	_OW_reset
- 618                     ; 114   OW_write_8(SKIP_ROM_COMMAND);
- 620  0003 a6cc          	ld	a,#204
- 621  0005 cd0000        	call	_OW_write_8
- 623                     ; 115   OW_write_8(READ_SCRATCHPAD_COMMAND);
- 625  0008 a6be          	ld	a,#190
- 626  000a cd0000        	call	_OW_write_8
- 628                     ; 116   return OW_read_8();
- 630  000d cd0000        	call	_OW_read_8
- 634  0010 81            	ret
- 647                     	xdef	_OW_read_8
- 648                     	xdef	_OW_write_8
- 649                     	xdef	_DS18B20_read_8
- 650                     	xdef	_DS18B20_read_16
- 651                     	xdef	_DS18B20_convert
- 652                     	xdef	_DS18B20_init
- 653                     	xdef	_OW_reset
- 672                     	end
+   4                     ; Optimizer V4.3.8 - 06 Dec 2012
+  50                     ; 21 u8 DS18B20_All_init(void)
+  50                     ; 22 {
+  52                     .text:	section	.text,new
+  53  0000               _DS18B20_All_init:
+  57                     ; 23   if(!OW_reset()) return 0;
+  59  0000 cd0000        	call	_OW_reset
+  61  0003 4d            	tnz	a
+  62  0004 2601          	jrne	L12
+  67  0006 81            	ret	
+  68  0007               L12:
+  69                     ; 24   OW_write_8(SKIP_ROM);           /* SKIP ROM command - used when only one sensor on bus */
+  71  0007 a6cc          	ld	a,#204
+  72  0009 cd0000        	call	_OW_write_8
+  74                     ; 25   OW_write_8(WRITE_SCRATCHPAD);   /* WRITE SCRATCHPAD command */
+  76  000c a64e          	ld	a,#78
+  77  000e cd0000        	call	_OW_write_8
+  79                     ; 26   OW_write_8(0x00);               /* TH register or User Byte 1 */
+  81  0011 4f            	clr	a
+  82  0012 cd0000        	call	_OW_write_8
+  84                     ; 27   OW_write_8(0x00);               /* TL register or User Byte 2 */
+  86  0015 4f            	clr	a
+  87  0016 cd0000        	call	_OW_write_8
+  89                     ; 28   OW_write_8(0x7F);               /* configuration register: 12 bit resolution - 750ms conversion time */
+  91  0019 a67f          	ld	a,#127
+  92  001b cd0000        	call	_OW_write_8
+  94                     ; 29   return 1;
+  96  001e a601          	ld	a,#1
+  99  0020 81            	ret	
+ 125                     ; 35 u8 DS18B20_All_convert(void)
+ 125                     ; 36 {
+ 126                     .text:	section	.text,new
+ 127  0000               _DS18B20_All_convert:
+ 131                     ; 37   if(!OW_reset()) return 0;
+ 133  0000 cd0000        	call	_OW_reset
+ 135  0003 4d            	tnz	a
+ 136  0004 2601          	jrne	L33
+ 141  0006 81            	ret	
+ 142  0007               L33:
+ 143                     ; 38   OW_write_8(SKIP_ROM);
+ 145  0007 a6cc          	ld	a,#204
+ 146  0009 cd0000        	call	_OW_write_8
+ 148                     ; 39   OW_write_8(CONVERT_T);
+ 150  000c a644          	ld	a,#68
+ 151  000e cd0000        	call	_OW_write_8
+ 153                     ; 40   return 1;
+ 155  0011 a601          	ld	a,#1
+ 158  0013 81            	ret	
+ 206                     ; 51 u8 DS18B20_All_Read_Temp(s16* result)
+ 206                     ; 52 {
+ 207                     .text:	section	.text,new
+ 208  0000               _DS18B20_All_Read_Temp:
+ 210  0000 89            	pushw	x
+ 211  0001 89            	pushw	x
+ 212       00000002      OFST:	set	2
+ 215                     ; 54   if(!OW_reset()) return 0;
+ 217  0002 cd0000        	call	_OW_reset
+ 219  0005 4d            	tnz	a
+ 223  0006 2725          	jreq	L64
+ 224                     ; 55   OW_write_8(SKIP_ROM);
+ 226  0008 a6cc          	ld	a,#204
+ 227  000a cd0000        	call	_OW_write_8
+ 229                     ; 56   OW_write_8(READ_SCRATCHPAD);
+ 231  000d a6be          	ld	a,#190
+ 232  000f cd0000        	call	_OW_write_8
+ 234                     ; 57   tmp = OW_read_8();
+ 236  0012 cd0000        	call	_OW_read_8
+ 238  0015 5f            	clrw	x
+ 239  0016 97            	ld	xl,a
+ 240  0017 1f01          	ldw	(OFST-1,sp),x
+ 241                     ; 58   tmp |= OW_read_8() << 8;
+ 243  0019 cd0000        	call	_OW_read_8
+ 245  001c 5f            	clrw	x
+ 246  001d 97            	ld	xl,a
+ 247  001e 7b02          	ld	a,(OFST+0,sp)
+ 248  0020 01            	rrwa	x,a
+ 249  0021 1a01          	or	a,(OFST-1,sp)
+ 250  0023 01            	rrwa	x,a
+ 251  0024 1f01          	ldw	(OFST-1,sp),x
+ 252                     ; 59   *result = tmp;
+ 254  0026 1e03          	ldw	x,(OFST+1,sp)
+ 255  0028 1601          	ldw	y,(OFST-1,sp)
+ 256  002a ff            	ldw	(x),y
+ 257                     ; 60   return 1;
+ 259  002b a601          	ld	a,#1
+ 261  002d               L64:
+ 263  002d 5b04          	addw	sp,#4
+ 264  002f 81            	ret	
+ 303                     ; 67 u8 DS18B20_All_Read_Byte(u8* result)
+ 303                     ; 68 {
+ 304                     .text:	section	.text,new
+ 305  0000               _DS18B20_All_Read_Byte:
+ 307  0000 89            	pushw	x
+ 308       00000000      OFST:	set	0
+ 311                     ; 69   if(!OW_reset()) return 0;
+ 313  0001 cd0000        	call	_OW_reset
+ 315  0004 4d            	tnz	a
+ 319  0005 2712          	jreq	L26
+ 320                     ; 70   OW_write_8(SKIP_ROM);
+ 322  0007 a6cc          	ld	a,#204
+ 323  0009 cd0000        	call	_OW_write_8
+ 325                     ; 71   OW_write_8(READ_SCRATCHPAD);
+ 327  000c a6be          	ld	a,#190
+ 328  000e cd0000        	call	_OW_write_8
+ 330                     ; 72   *result = OW_read_8();
+ 332  0011 cd0000        	call	_OW_read_8
+ 334  0014 1e01          	ldw	x,(OFST+1,sp)
+ 335  0016 f7            	ld	(x),a
+ 336                     ; 73   return 1;
+ 338  0017 a601          	ld	a,#1
+ 340  0019               L26:
+ 342  0019 85            	popw	x
+ 343  001a 81            	ret	
+ 409                     ; 80 u8 DS18B20_Read_Temp(s16* result, u8* ROM_ID)
+ 409                     ; 81 {
+ 410                     .text:	section	.text,new
+ 411  0000               _DS18B20_Read_Temp:
+ 413  0000 89            	pushw	x
+ 414  0001 89            	pushw	x
+ 415       00000002      OFST:	set	2
+ 418                     ; 83   if(!OW_reset()) return 0;
+ 420  0002 cd0000        	call	_OW_reset
+ 422  0005 4d            	tnz	a
+ 426  0006 2739          	jreq	L201
+ 427                     ; 84   OW_write_8(MATCH_ROM);
+ 429  0008 a655          	ld	a,#85
+ 430  000a cd0000        	call	_OW_write_8
+ 432                     ; 85   for(i = 0; i < 8; i++)
+ 434  000d 5f            	clrw	x
+ 435  000e 1f01          	ldw	(OFST-1,sp),x
+ 436  0010               L531:
+ 437                     ; 86     OW_write_8(ROM_ID[i]);
+ 439  0010 72fb07        	addw	x,(OFST+5,sp)
+ 440  0013 f6            	ld	a,(x)
+ 441  0014 cd0000        	call	_OW_write_8
+ 443                     ; 85   for(i = 0; i < 8; i++)
+ 445  0017 1e01          	ldw	x,(OFST-1,sp)
+ 446  0019 5c            	incw	x
+ 447  001a 1f01          	ldw	(OFST-1,sp),x
+ 450  001c a30008        	cpw	x,#8
+ 451  001f 2fef          	jrslt	L531
+ 452                     ; 87   OW_write_8(READ_SCRATCHPAD);
+ 454  0021 a6be          	ld	a,#190
+ 455  0023 cd0000        	call	_OW_write_8
+ 457                     ; 88   tmp = OW_read_8();
+ 459  0026 cd0000        	call	_OW_read_8
+ 461  0029 5f            	clrw	x
+ 462  002a 97            	ld	xl,a
+ 463  002b 1f01          	ldw	(OFST-1,sp),x
+ 464                     ; 89   tmp |= OW_read_8() << 8;
+ 466  002d cd0000        	call	_OW_read_8
+ 468  0030 5f            	clrw	x
+ 469  0031 97            	ld	xl,a
+ 470  0032 7b02          	ld	a,(OFST+0,sp)
+ 471  0034 01            	rrwa	x,a
+ 472  0035 1a01          	or	a,(OFST-1,sp)
+ 473  0037 01            	rrwa	x,a
+ 474  0038 1f01          	ldw	(OFST-1,sp),x
+ 475                     ; 90   *result = tmp;
+ 477  003a 1e03          	ldw	x,(OFST+1,sp)
+ 478  003c 1601          	ldw	y,(OFST-1,sp)
+ 479  003e ff            	ldw	(x),y
+ 480                     ; 91   return 1;
+ 482  003f a601          	ld	a,#1
+ 484  0041               L201:
+ 486  0041 5b04          	addw	sp,#4
+ 487  0043 81            	ret	
+ 535                     ; 99 u8 DS18B20_Read_ROM_ID(u8* ROM_ID)
+ 535                     ; 100 {
+ 536                     .text:	section	.text,new
+ 537  0000               _DS18B20_Read_ROM_ID:
+ 539  0000 89            	pushw	x
+ 540  0001 89            	pushw	x
+ 541       00000002      OFST:	set	2
+ 544                     ; 102   if(!OW_reset()) return 0;
+ 546  0002 cd0000        	call	_OW_reset
+ 548  0005 4d            	tnz	a
+ 552  0006 271d          	jreq	L411
+ 553                     ; 103   OW_write_8(READ_ROM);
+ 555  0008 a633          	ld	a,#51
+ 556  000a cd0000        	call	_OW_write_8
+ 558                     ; 104   for(i = 0; i < 8; i++)
+ 560  000d 5f            	clrw	x
+ 561  000e 1f01          	ldw	(OFST-1,sp),x
+ 562  0010               L761:
+ 563                     ; 105     ROM_ID[i] = OW_read_8();
+ 565  0010 cd0000        	call	_OW_read_8
+ 567  0013 1e01          	ldw	x,(OFST-1,sp)
+ 568  0015 72fb03        	addw	x,(OFST+1,sp)
+ 569  0018 f7            	ld	(x),a
+ 570                     ; 104   for(i = 0; i < 8; i++)
+ 572  0019 1e01          	ldw	x,(OFST-1,sp)
+ 573  001b 5c            	incw	x
+ 574  001c 1f01          	ldw	(OFST-1,sp),x
+ 577  001e a30008        	cpw	x,#8
+ 578  0021 2fed          	jrslt	L761
+ 579                     ; 106   return 1;
+ 581  0023 a601          	ld	a,#1
+ 583  0025               L411:
+ 585  0025 5b04          	addw	sp,#4
+ 586  0027 81            	ret	
+ 599                     	xdef	_DS18B20_Read_ROM_ID
+ 600                     	xdef	_DS18B20_Read_Temp
+ 601                     	xdef	_DS18B20_All_Read_Byte
+ 602                     	xdef	_DS18B20_All_Read_Temp
+ 603                     	xdef	_DS18B20_All_convert
+ 604                     	xdef	_DS18B20_All_init
+ 605                     	xref	_OW_read_8
+ 606                     	xref	_OW_write_8
+ 607                     	xref	_OW_reset
+ 626                     	end

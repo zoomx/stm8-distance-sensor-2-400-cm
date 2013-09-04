@@ -50,6 +50,18 @@ crtsi0.sm8
 
 # Object files list - section reserved for STVD
 #<BEGIN OBJECT_FILES>
+Debug\calibdata.o
+Debug\stm8s_uart1.o
+Debug\osa.o
+Debug\stm8s_wwdg.o
+Debug\display.o
+Debug\flashmngr.o
+Debug\sst25vf016b75.o
+Debug\onewire.o
+Debug\softi2c.o
+Debug\stm8s_spi.o
+Debug\ds3231m_rtc.o
+Debug\7seg.o
 Debug\stm8s_tim1.o
 Debug\config.o
 Debug\stm8s_tim4.o
