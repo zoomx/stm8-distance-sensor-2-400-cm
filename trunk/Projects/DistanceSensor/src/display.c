@@ -18,14 +18,17 @@ static const u16 SymbU =      0x0C70;
 static const u16 SymbMinusA = 0x0100;
 static const u16 SymbMinusB = 0x8000;
 static const u16 SymbSpace  = 0x0000;
+
 #ifdef USE_EXT_CHAR
 static const u16 Char_A_A = 0x0FE0;
 static const u16 Char_A_B = 0xF006;
 static const u16 Char_C_A = 0x0630;
 static const u16 Char_C_B = 0x600C;
 #endif
+
 static const u16 Char_E_A = 0x0730;
 static const u16 Char_E_B = 0xE00C;
+
 #ifdef USE_EXT_CHAR
 static const u16 Char_F_A = 0x0720;
 static const u16 Char_F_B = 0xE004;
@@ -44,8 +47,10 @@ static const u16 Char_U_B = 0x300E;
 static const u16 Char_b_A = 0x0570;
 static const u16 Char_b_B = 0xA00E;
 #endif
+
 static const u16 Char_c_A = 0x0130;
 static const u16 Char_c_B = 0x800C;
+
 #ifdef USE_EXT_CHAR
 static const u16 Char_d_A = 0x0970;
 static const u16 Char_d_B = 0x900E;
@@ -62,6 +67,7 @@ static const u16 Char_o_B = 0x800E;
 static const u16 Char_u_A = 0x0070;
 static const u16 Char_u_B = 0x000E;
 #endif
+
 static const u16 A[10] = {0x0E70,0x0840,0x0B30,0x0B50,0x0D40, 0x0750,0x0770,0x0A40,0x0F70,0x0F50};   
 static const u16 B[10] = {0x700E,0x1002,0xD00C,0xD00A,0xB002, 0xE00A,0xE00E,0x5002,0xF00E,0xF00A};
 

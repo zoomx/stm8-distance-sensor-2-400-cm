@@ -24,9 +24,13 @@
 /* CONSTANTS ---------------------------------------------------------------*/
 
 /* Calibration variables */
-static const u8 ROM_ID1[8] = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89};  /* DS18B20 ROM ID */
-static const u16 DataLogInterval = 30000;    /* 60sec */
-static const u16 Display_Brightness = 3500;  /* display brightness to 25% */
+const struct 
+{
+  u8 ROM_ID1[8];
+  u16 DataLogInterval;
+  u16 Display_Brightness;
+}CAL;
+
 /* Global variables ----------------------------------------------------------*/
 static s16 temperature = 0;
 static u8 temp_intreg;
@@ -64,9 +68,19 @@ void main(void)
 {
   Config();
   DELAY_US(1000);
+  //CAL.ROM_ID1[0] = 0x28;  /* DS18B20 ROM ID */
+  /*CAL.ROM_ID1[1] = 0x16;
+  CAL.ROM_ID1[2] = 0xAE;
+  CAL.ROM_ID1[3] = 0xBF;
+  CAL.ROM_ID1[4] = 0x3;
+  CAL.ROM_ID1[5] = 0x0;
+  CAL.ROM_ID1[6] = 0x0;
+  CAL.ROM_ID1[7] = 0x89;*/
+  //CAL.DataLogInterval = 30000;    /* 60sec */
+  //CAL.Display_Brightness = 3500;  /* display brightness to 25% */
   DS18B20_All_init();
   Display_Init();
-  Display_SetBrightness(Display_Brightness);  
+  Display_SetBrightness(CAL.Display_Brightness);  
   FlashMngr_Init();
   //FLAG_ds18b20_err = DS18B20_Read_ROM_ID(ROM_ID1);
   FLAG_ds18b20_err = DS18B20_All_convert();
@@ -84,19 +98,18 @@ void main(void)
 
 void TASK_LogDataToFlash()
 {
-  u8 l_buff[8];
   for(;;)
   {
-    OS_Delay(DataLogInterval);
-    l_buff[0] = (u8)temp_intreg;
-    l_buff[1] = (u8)temp_frac;
-    l_buff[2] = (u8)RTC_hour;
-    l_buff[3] = (u8)RTC_min;
-    l_buff[4] = (u8)RTC_sec;
-    l_buff[5] = (u8)RTC_day;
-    l_buff[6] = (u8)RTC_month;
-    l_buff[7] = (u8)RTC_year;
-    FlashMngr_StoreData(l_buff, 8);
+    OS_Delay(CAL.DataLogInterval);
+    buff[0] = (u8)temp_intreg;
+    buff[1] = (u8)temp_frac;
+    buff[2] = (u8)RTC_hour;
+    buff[3] = (u8)RTC_min;
+    buff[4] = (u8)RTC_sec;
+    buff[5] = (u8)RTC_day;
+    buff[6] = (u8)RTC_month;
+    buff[7] = (u8)RTC_year;
+    FlashMngr_StoreData(buff, 8);
   }
 }
 
@@ -111,45 +124,143 @@ void TASK_UARTCommands()
   
       switch(rcvd_message)
       {
-        case 't': {
-                     //DS3231M_SetTime();
-                     //DS3231M_SetDate();
-                     break;
+	    u8 l_code;
+        case 't': {  
+		            //Receive second UART code
+					while(!(UART1->SR & (u8)0x20));
+                    l_code = UART1->DR;
+					switch(l_code)
+					{
+					  case 's':{ /* "ts" : Set Time */
+					             /* Receive date / time information (7bytes) */
+		                         //Receive sec
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_sec = UART1->DR;
+					             //Receive min
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_min = UART1->DR;
+					             //Receive hour
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_hour = UART1->DR;
+					             //Receive day
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_day = UART1->DR;
+					             //Receive date
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_date = UART1->DR;
+					             //Receive month
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_month = UART1->DR;
+					             //Receive year
+					             while(!(UART1->SR & (u8)0x20));
+                                 RTC_year = UART1->DR;
+                                 DS3231M_SetTime();
+                                 DS3231M_SetDate();
+								 break;
+					           }
+					  case 'g':{ /* "tg" : Get Time */
+					             //Send 7 byte date / time information
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_sec;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_min;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_hour;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_day;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_date;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_month;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = RTC_year;
+								 break;
+					           }
+					}
+                    break;
                    }
 
-        case 'd': {FlashMngr_ReadDataToUART(); break;}
+        case 'r': {
+		            //Receive second UART code
+					while(!(UART1->SR & (u8)0x20));
+                    l_code = UART1->DR;
+					switch(l_code)
+					{
+					  case 'j':{ /* "rj" : Get Header size */
+					             FlashMngr_GetHeaderSizeToUART(); 
+					             break;
+					           }
+					  case 'h':{ /* "rh" : Get Header */
+					             FlashMngr_ReadHeaderToUART(); 
+								 break;
+					           }
+					  case 'd':{ /* "rd" : Get Logged data */
+					             FlashMngr_ReadDataToUART(); 
+								 break;
+							   }
+					  case 'f':{ /* "rf" : Get Free Space */
+					             FlashMngr_GetOccupiedSpaceToUART(); 
+								 break;
+							   }
+					}
+		            break;
+				  }
 
-        case 's': {FlashMngr_GetOccupiedSpaceToUART(); break;}
-
-        case 'r': {FlashMngr_GetHeaderSizeToUART(); break;}
-
-        case 'h': {FlashMngr_ReadHeaderToUART(); break;}
-
-        case 'a': {FlashMngr_EraseChip(); break;}
+        case 'e': { /* "e" : Erase chip */
+		            FlashMngr_EraseChip(); 
+					break;
+				  }
 
         case 'c': {
                     u8 l_idx = 0;
                     UART1_ITConfig(UART1_IT_RXNE, DISABLE);
-                    //Receive size of data to be updated in FLASH
-                    while(!(UART1->SR & (u8)0x20));
-                    l_size = UART1->DR;
-                    tmp = l_size;
-					          //Receive FLASH destination address
-                    while(!(UART1->SR & (u8)0x20));
-                    l_address = UART1->DR;
-					          l_address <<= 8;
-					          while(!(UART1->SR & (u8)0x20));
-                    l_address |= UART1->DR;
-                    //Receive data to be updated in FLASH
-                    while(l_size > 0)
-                    {
-                      while(!(UART1->SR & (u8)0x20));
-                      buff[l_idx++] = UART1->DR;
-                      l_size--;
-                    }
-                    CalibData_Update(l_address, buff, tmp);
+                    //Receive second UART code
+					while(!(UART1->SR & (u8)0x20));
+                    l_code = UART1->DR;
+					switch(l_code)
+					{
+					  case 'f':{ /* "cf" : flash calibration data */
+							     //Receive size of data to be updated in FLASH
+                                 while(!(UART1->SR & (u8)0x20));
+                                 l_size = UART1->DR;
+                                 tmp = l_size;
+					             //Receive FLASH destination address
+                                 while(!(UART1->SR & (u8)0x20));
+                                 l_address = UART1->DR;
+					             l_address <<= 8;
+					             while(!(UART1->SR & (u8)0x20));
+                                 l_address |= UART1->DR;
+                                 //Receive data to be updated in FLASH
+                                 while(l_size > 0)
+                                 {
+                                   while(!(UART1->SR & (u8)0x20));
+                                   buff[l_idx++] = UART1->DR;
+                                   l_size--;
+                                 }
+                                 CalibData_Update(l_address, buff, tmp);
+								 break;
+							   }
+					  case 'g':{ /* "cg" : get address of structure with calibration data(2byte) */
+								 union {
+								   struct {
+								     u8 byte1;
+									   u8 byte2;
+								   };
+								   u16 word1;
+								 }adr;
+                adr.word1 = (u16)(&CAL);
+								 //Send 2 byte calibration structure address
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = adr.byte1;
+								 while(!(UART1->SR & UART1_FLAG_TXE));
+                                 UART1->DR = adr.byte2;
+								 break;
+					           }
+					           
+					}
                     UART1_ITConfig(UART1_IT_RXNE, ENABLE);
-          };
+					break;
+          }
       }
     }
 }  
@@ -160,7 +271,7 @@ void TASK_1000mS()
   for (;;)
   {
     OS_Delay(500);      // Wait 1000 ms
-    DS18B20_Read_Temp(&temperature, ROM_ID1);
+    DS18B20_Read_Temp(&temperature, CAL.ROM_ID1);
     DS3231M_GetTime();
     DS3231M_GetDate();
     //Show hour and minutes on the display

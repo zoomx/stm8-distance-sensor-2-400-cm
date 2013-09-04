@@ -1,17 +1,19 @@
-#include "stm8s_flash.h"
-
+#include "board.h"
 
 void CalibData_Update(u16 address, u8* data, u8 size)
 {
-  FLASH_Unlock(FLASH_MEMTYPE_PROG);
+  /* Unlock FLASH */
+  FLASH->PUKR = FLASH_RASS_KEY1;
+  FLASH->PUKR = FLASH_RASS_KEY2;
   
   while(size > 0)
   {
-    FLASH_ProgramByte(address, *data);
+    *(PointerAttr u8*) (u16)address = *data;
     data++;
     address++;
     size--;
   }
   
-  FLASH_Lock(FLASH_MEMTYPE_PROG);
+  /* Lock FLASH */
+  FLASH->IAPSR &= (uint8_t)FLASH_MEMTYPE_PROG;
 }

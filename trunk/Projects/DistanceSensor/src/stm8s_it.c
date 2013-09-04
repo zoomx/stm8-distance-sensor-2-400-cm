@@ -30,6 +30,9 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
+//#define ULTRASONIC_WATCHDOG
+//#define ENABLE_CAPTURE_HANDLER
+
 #define CAPTURE_ERR_CNT_THRS 10
 #define SENSOR_ALIVE_THRS 1000    /* 1000*2ms = 2000ms */
 /* Private macro -------------------------------------------------------------*/
@@ -281,18 +284,19 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
+  #ifdef ENABLE_CAPTURE_HANDLER
   CAPTURE_status = 5;
   if(TIM1->SR1 & TIM1_IT_CC3)
   {    
-    TIM1->CR1 &= (u8)(~(0x01));      /* after measurement stop the timer, to be restarted by sonar rising edge */
-    TIM1->CNTRH = 0x00;        /* reset timer */
+    TIM1->CR1 &= (u8)(~(0x01));      // after measurement stop the timer, to be restarted by sonar rising edge 
+    TIM1->CNTRH = 0x00;        // reset timer 
     TIM1->CNTRL = 0x00; 
-    sensor_alive_cnt = 0;      /* reset ultrasonic sensor alive watchdog */
+    sensor_alive_cnt = 0;      // reset ultrasonic sensor alive watchdog 
     ERROR_cap_sens_not_resp = FALSE;
     CAPTURE_status = 4;	
     if(!(TIM1->SR1 & TIM1_IT_TRIGGER))  
     {
-      /* if no trigger occured previously */
+      // if no trigger occured previously
       CAPTURE_status = 2;
       if(CAPTURE_no_trig_cnt < (u8)255) ++CAPTURE_no_trig_cnt; 
       if(CAPTURE_no_trig_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
@@ -303,7 +307,7 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
     }
     else if(TIM1->SR1 & TIM1_IT_UPDATE)
     {
-      /* if we have timer overflow since last trigger - echo out of specification of sonar */
+      // if we have timer overflow since last trigger - echo out of specification of sonar 
       CAPTURE_status = 1;
       if(CAPTURE_ovf_cnt < (u8)255) ++CAPTURE_ovf_cnt;
       if(CAPTURE_ovf_cnt >= (u8)CAPTURE_ERR_CNT_THRS)
@@ -318,7 +322,7 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
       tmpccr3l = TIM1->CCR3L;
       CAPTURE_delta = (u16)(tmpccr3l);
       CAPTURE_delta |= (u16)((u16)tmpccr3h << 8);
-      EVENT_cap_new_mes = TRUE;    /* new distance measurement value */
+      EVENT_cap_new_mes = TRUE;    // new distance measurement value 
       CAPTURE_status = 3;
     }
     if(CAPTURE_no_err_cnt < (u8)255)  ++CAPTURE_no_err_cnt;
@@ -329,10 +333,11 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
       ERROR_cap_ovf = FALSE;
       ERROR_cap_no_trig = FALSE;
     }
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);     /* clear TIM1 UPDATE interrupt flag */
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);        /* clear TIM1 CC3 interrupt flag */
-    TIM1->SR1 = (u8)(~(u8)TIM1_IT_TRIGGER);    /* clear TIM1 TRIGGER interrupt flag */
+    TIM1->SR1 = (u8)(~(u8)TIM1_IT_UPDATE);     // clear TIM1 UPDATE interrupt flag 
+    TIM1->SR1 = (u8)(~(u8)TIM1_IT_CC3);        // clear TIM1 CC3 interrupt flag 
+    TIM1->SR1 = (u8)(~(u8)TIM1_IT_TRIGGER);    // clear TIM1 TRIGGER interrupt flag 
   }
+  #endif
 }
 
 #ifdef STM8S903
@@ -579,12 +584,14 @@ INTERRUPT_HANDLER(TIM4_UPD_OVF_IRQHandler, 23)     /* once every 2MS */
       WWDG_SWReset();
     }
   }
-  /* Ultrasonic sensor alive watchdog */
-  if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   /* to be reset in sensor ISR */
+  #ifdef ULTRASONIC_WATCHDOG
+  // Ultrasonic sensor alive watchdog 
+  if(sensor_alive_cnt < 65535)  sensor_alive_cnt++;   // to be reset in sensor ISR 
   if(sensor_alive_cnt >= SENSOR_ALIVE_THRS)
   {
     ERROR_cap_sens_not_resp = TRUE;
   }
+  #endif
   /*----------------------------------*/
   //Cyclic_tick();
   OS_Timer();
