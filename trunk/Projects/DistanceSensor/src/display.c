@@ -265,5 +265,6 @@ Display brightness: 0-0% 5000-50% 10000-100%
 */
 void Display_SetBrightness(u16 dimmval)
 {
-  TIM2_SetCompare2(dimmval);
+  TIM2->CCR2H = (u8)(dimmval >> 8);
+  TIM2->CCR2L = (u8)(dimmval);
 }
