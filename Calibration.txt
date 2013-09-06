@@ -1,0 +1,19 @@
+struct CalibData 
+{
+  u8 ROM_ID1[8];
+  u16 DataLogInterval;
+  u16 Display_Brightness;
+};
+
+const struct CalibData CAL = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89, 30000, 3500};
+
+80D1  ROM_ID
+
+80D9  DataLogInterval
+
+80DB  Display_Brightness
+
+
+//Receive size of data to be updated in FLASH   u8
+//Receive FLASH destination address             u16
+//Receive data to be updated in FLASH           u8 * size

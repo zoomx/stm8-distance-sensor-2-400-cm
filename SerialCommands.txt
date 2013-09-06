@@ -1,0 +1,21 @@
+/* "ts" : Set Time */
+/* Receive date / time information (7bytes) */
+
+/* "tg" : Get Time */
+/* Send 6 byte date / time information */
+
+/* "rj" : Get Header size */
+
+/* "rh" : Get Header */
+
+/* "rd" : Get Logged data */
+
+/* "rf" : Get Free Space */
+
+/* "e" : Erase chip */
+
+/* "cf" : flash calibration data */
+/* Receive size of data to be updated in FLASH */
+
+/* "cg" : get address of structure with calibration data(2byte) */
+
