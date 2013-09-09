@@ -29,6 +29,7 @@
 # Segment Code,Constants:
 +seg .const -b 0x8080 -m 0x1f80 -n .const -it
 +seg .text -a .const -n .text
++seg .CALIB -a .text -n .CALIB
 # Segment Eeprom:
 +seg .eeprom -b 0x4000 -m 0x80 -n .eeprom
 # Segment Zero Page:
