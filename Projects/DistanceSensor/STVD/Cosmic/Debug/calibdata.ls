@@ -18,7 +18,7 @@
  101  000b 1e01          	ldw	x,(OFST+1,sp)
  102  000d a30000        	cpw	x,#_CAL
  103  0010 251b          	jrult	L54
- 105  0012 a3000c        	cpw	x,#_CAL+12
+ 105  0012 a3000d        	cpw	x,#_CAL+13
  106  0015 2416          	jruge	L54
  107                     ; 19       *(PointerAttr u8*) (u16)address = *data;
  109  0017 1e05          	ldw	x,(OFST+5,sp)

@@ -28,11 +28,17 @@ struct CalibData
 {
   u8 ROM_ID1[8];
   u16 DataLogInterval;
-  u16 Display_Brightness;  /* 10000 -> 0% brightness, 0 -> 100% brighness */
+  u16 Display_Brightness;  /* 7 Segment Display Brightness: 10000 -> 0% brightness, 0 -> 100% brighness */
+  u8 EnableLogging;        /* Data Logging to Flash: 0 No logging to Flash, 1 - Logging to Flash*/
+  u8 PwrSaveMode;          /* MCU low power modes: 0x00 - No low power modes, 0x01- WAIT, 0x02- Active HALT, 0x03- Active HALT with MVR auto p off, 0x04- HALT*/
 };
-
-const struct CalibData CAL = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89, 30000, 3500};
-
+#pragma section const {CALIB}
+const struct CalibData CAL = {0x28, 0x16, 0xAE, 0xBF, 0x3, 0x0, 0x0, 0x89, 
+                              30000/*Data logging interval-60sec*/, 
+                              3500 /*Display brightness*/, 
+                              FALSE /*No data logging by default*/, 
+                              0x00 /*No low power modes*/};
+#pragma section ()
 /* Global variables ----------------------------------------------------------*/
 static s16 temperature = 0;
 static u8 temp_intreg;
@@ -92,15 +98,18 @@ void TASK_LogDataToFlash()
   for(;;)
   {
     OS_Delay(CAL.DataLogInterval);
-    buff[0] = (u8)temp_intreg;
-    buff[1] = (u8)temp_frac;
-    buff[2] = (u8)RTC_hour;
-    buff[3] = (u8)RTC_min;
-    buff[4] = (u8)RTC_sec;
-    buff[5] = (u8)RTC_day;
-    buff[6] = (u8)RTC_month;
-    buff[7] = (u8)RTC_year;
-    FlashMngr_StoreData(buff, 8);
+    if(CAL.EnableLogging == 0x01)
+    {
+      buff[0] = (u8)temp_intreg;
+      buff[1] = (u8)temp_frac;
+      buff[2] = (u8)RTC_hour;
+      buff[3] = (u8)RTC_min;
+      buff[4] = (u8)RTC_sec;
+      buff[5] = (u8)RTC_day;
+      buff[6] = (u8)RTC_month;
+      buff[7] = (u8)RTC_year;
+      FlashMngr_StoreData(buff, 8);
+    }
   }
 }  
  

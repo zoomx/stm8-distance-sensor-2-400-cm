@@ -1,8 +1,8 @@
 #include "board.h"
 
-extern const volatile CAL;
+extern const CAL;
 
-#define SIZEOFCAL (u8)12
+#define SIZEOFCAL (u8)13
 #define CAL_Base_Address (u16)(&CAL)
 #define CAL_MAX_Address  (u16)(CAL_Base_Address + SIZEOFCAL)
 
